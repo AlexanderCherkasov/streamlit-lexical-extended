@@ -140,7 +140,6 @@ function StreamlitLexical({ args, theme: streamlitTheme }: ComponentProps) {
       currentMarkdownRef.current = initialValue
       Streamlit.setComponentValue(initialValue)
       hasSentInitialValue.current = true
-      console.log('Sent initial value to Streamlit:', initialValue.substring(0, 100))
     }
 
     // Set initial frame height - CRITICAL: without this, iframe has height 0
@@ -180,7 +179,6 @@ function StreamlitLexical({ args, theme: streamlitTheme }: ComponentProps) {
         // Send to Streamlit
         const valueToSend = markdown !== null && markdown !== undefined ? markdown : ""
         Streamlit.setComponentValue(valueToSend)
-        console.log('Editor changed, sent to Streamlit:', valueToSend.substring(0, 100))
 
         // Update height in auto-expand mode
         if (!typedArgs.height) {
@@ -293,7 +291,6 @@ function EditorContentUpdater({
       // 2. overwrite is true AND content is different from what we have
       if (currentText === "" || (overwrite && content !== currentMarkdownRef.current)) {
         root.clear()
-        console.log('Updating editor with new content:', content.substring(0, 100))
 
         if (content) {
           $convertFromMarkdownString(
