@@ -45,26 +45,31 @@ else:
 
 
 def streamlit_lexical_extended(
-    height=960,
     value="",
     placeholder="",
+    height=None,
+    min_height=400,
     debounce=500,
     key=None,
     overwrite=True,
     on_change=None,
 ):
-    """Create a new instance of "streamlit_lexical".
+    """Create a new instance of "streamlit_lexical_extended".
 
     Parameters
     ----------
-    height: int
-        Optional specification for height, in pixels of lexical text box.
     value: str
         Optional initial value to pass to editor
     placeholder: str
         Optional initial placeholder text to display in editor
-    debounce:
-        Time delay to save editor contents. Default is 500 ms/
+    height: int or None
+        Fixed height in pixels. If specified, editor will have this exact height.
+        If None, editor will auto-expand to fit content (respecting min_height).
+    min_height: int
+        Minimum height in pixels. Default is 400. Editor will never be smaller than this.
+        Only used when height is None (auto-expand mode).
+    debounce: int
+        Time delay to save editor contents in milliseconds. Default is 500 ms.
     key: str or None
         An optional key that uniquely identifies this component. If this is
         None, and the component's arguments are changed, the component will
@@ -81,12 +86,15 @@ def streamlit_lexical_extended(
 
     """
     assert debounce > 0, "Debounce must be greater than 0."
-    assert height > 0, "The min_height must be greater than 0."
+    assert min_height > 0, "min_height must be greater than 0."
+    if height is not None:
+        assert height > 0, "height must be greater than 0."
 
     component_value = _component_func(
-        min_height=height,
         value=value,
         placeholder=placeholder,
+        height=height,
+        min_height=min_height,
         debounce=debounce,
         key=key,
         overwrite=overwrite,

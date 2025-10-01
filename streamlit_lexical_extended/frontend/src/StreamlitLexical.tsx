@@ -44,6 +44,7 @@ const SAFE_TRANSFORMERS = TRANSFORMERS.filter(transformer => {
 })
 
 interface StreamlitLexicalArgs {
+  height?: number | null
   min_height: number
   value: string
   placeholder: string
@@ -75,6 +76,9 @@ function StreamlitLexical({ args, theme: streamlitTheme }: ComponentProps) {
 
   // Track update version to prevent race conditions
   const updateVersionRef = useRef(0)
+
+  // Ref to the editor container for height calculation
+  const editorContainerRef = useRef<HTMLDivElement>(null)
 
   // Generate unique namespace using key or instance ID
   const namespace = useMemo(() => {
@@ -111,6 +115,24 @@ function StreamlitLexical({ args, theme: streamlitTheme }: ComponentProps) {
     ],
   }), [namespace]) // Only recreate when namespace changes
 
+  // Function to update frame height based on mode
+  const updateFrameHeight = useCallback(() => {
+    if (typedArgs.height) {
+      // Fixed height mode
+      Streamlit.setFrameHeight(typedArgs.height)
+    } else {
+      // Auto-expand mode: measure content and respect min_height
+      if (editorContainerRef.current) {
+        const contentHeight = editorContainerRef.current.scrollHeight
+        const finalHeight = Math.max(contentHeight, typedArgs.min_height || 400)
+        Streamlit.setFrameHeight(finalHeight)
+      } else {
+        // Fallback if ref not ready
+        Streamlit.setFrameHeight(typedArgs.min_height || 400)
+      }
+    }
+  }, [typedArgs.height, typedArgs.min_height])
+
   // Send initial value to Streamlit on mount and set frame height
   useEffect(() => {
     if (!hasSentInitialValue.current) {
@@ -121,10 +143,23 @@ function StreamlitLexical({ args, theme: streamlitTheme }: ComponentProps) {
       console.log('Sent initial value to Streamlit:', initialValue.substring(0, 100))
     }
 
-    // Set frame height - CRITICAL: without this, iframe has height 0
-    Streamlit.setFrameHeight(typedArgs.min_height || 400)
+    // Set initial frame height - CRITICAL: without this, iframe has height 0
+    updateFrameHeight()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Only run on mount
+
+  // Update height when content changes (auto-expand mode only)
+  useEffect(() => {
+    if (!typedArgs.height) {
+      // Only in auto-expand mode
+      const timer = setTimeout(() => {
+        updateFrameHeight()
+      }, 100) // Small delay to let DOM update
+
+      return () => clearTimeout(timer)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typedArgs.height, updateFrameHeight]) // currentMarkdownRef is intentionally excluded
 
   // Handle editor changes with proper debouncing
   const handleEditorChange = useCallback((editorState: any) => {
@@ -146,9 +181,14 @@ function StreamlitLexical({ args, theme: streamlitTheme }: ComponentProps) {
         const valueToSend = markdown !== null && markdown !== undefined ? markdown : ""
         Streamlit.setComponentValue(valueToSend)
         console.log('Editor changed, sent to Streamlit:', valueToSend.substring(0, 100))
+
+        // Update height in auto-expand mode
+        if (!typedArgs.height) {
+          setTimeout(() => updateFrameHeight(), 50)
+        }
       }, typedArgs.debounce)
     })
-  }, [typedArgs.debounce])
+  }, [typedArgs.debounce, typedArgs.height, updateFrameHeight])
 
   // Cleanup debounce timer on unmount
   useEffect(() => {
@@ -164,8 +204,22 @@ function StreamlitLexical({ args, theme: streamlitTheme }: ComponentProps) {
     style.borderColor = streamlitTheme.primaryColor
   }
 
+  // Calculate editor style based on mode
+  const editorStyle: React.CSSProperties = typedArgs.height
+    ? {
+        // Fixed height mode
+        minHeight: `${typedArgs.height}px`,
+        maxHeight: `${typedArgs.height}px`,
+        overflowY: "auto",
+      }
+    : {
+        // Auto-expand mode
+        minHeight: `${typedArgs.min_height || 400}px`,
+        overflowY: "auto",
+      }
+
   return (
-    <div style={style} className="streamlit-lexical-editor">
+    <div ref={editorContainerRef} style={style} className="streamlit-lexical-editor">
       <LexicalComposer initialConfig={editorConfig} key={namespace}>
         <EditorContentUpdater
           content={typedArgs.value || ""}
@@ -180,11 +234,7 @@ function StreamlitLexical({ args, theme: streamlitTheme }: ComponentProps) {
               contentEditable={
                 <ContentEditable
                   className="editor-input"
-                  style={{
-                    minHeight: `${typedArgs.min_height}px`,
-                    maxHeight: `${typedArgs.min_height}px`,
-                    overflowY: "auto",
-                  }}
+                  style={editorStyle}
                 />
               }
               placeholder={<Placeholder text={typedArgs.placeholder} />}
