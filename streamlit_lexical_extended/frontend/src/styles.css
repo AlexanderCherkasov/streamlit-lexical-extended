@@ -1,0 +1,983 @@
+.editor-placeholder {
+  color: #ccc !important;
+  overflow: hidden;
+  position: absolute;
+  font-size: 14px;
+  font-family: "Source Sans Pro", sans-serif;
+  top: 0.6rem;
+  left: 0.55rem;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Dedicated table button rules (from scratch) */
+.toolbar .table-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  width: 36px;
+  padding: 6px;
+  margin: 0 4px 0 0 !important;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  box-sizing: border-box;
+  vertical-align: middle;
+  line-height: 0;
+}
+
+.toolbar .table-btn i.table {
+  width: 20px;
+  height: 20px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20px 20px;
+  opacity: 0.6;
+  transform: none; /* ensure no vertical nudge */
+}
+
+.toolbar .table-btn:hover:not([disabled]) { background-color: #eee; }
+.toolbar .table-btn.active { background-color: rgba(223, 232, 250, 0.3); }
+.toolbar .table-btn.active i.table { opacity: 1; }
+.toolbar .table-btn:disabled i.table { opacity: 0.2; }
+
+.editor-container {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 100%;
+  /* color: var(--text-color); */
+  position: relative;
+  line-height: 20px;
+  font-weight: 400;
+  text-align: left;
+  border-radius: 0.25rem;
+  background-color: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Ensure chevron button stays within bounds */
+}
+
+.editor-inner {
+  background: white;
+  position: relative;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Ensure content stays within bounds */
+}
+
+.editor-input {
+  /* min-height: 850px; this is now a parameter */
+  resize: none;
+  font-size: 14px;
+  font-family: "Source Sans Pro", sans-serif;
+  caret-color: rgb(5, 5, 5);
+  position: relative;
+  tab-size: 1;
+  outline: none;
+  padding: 0.5rem;
+  color: rgb(5, 5, 5);
+  background-color: white;
+  /* border: 1px solid var(--secondary-background-color); */
+  border-radius: 0 0 0.25rem 0.25rem;
+  flex-grow: 1;
+  overflow-y: auto;
+  line-height: 1.2;
+  /* margin-top: -1px; */
+}
+
+/* Tables - Enhanced styling for better visual experience */
+.editor-input table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.editor-input th,
+.editor-input td {
+  border: 1px solid #e1e5e9;
+  padding: 8px 12px;
+  vertical-align: top;
+  position: relative;
+  transition: background-color 0.15s ease;
+}
+
+/* Header cells - subtle styling without bold first row */
+.editor-input th {
+  background: #f8f9fa;
+  font-weight: 500;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+}
+
+/* Regular table cells */
+.editor-input td {
+  background: white;
+  color: #495057;
+}
+
+/* Hover effects for better user experience */
+.editor-input td:hover,
+.editor-input th:hover {
+  background: #f1f6ff;
+  cursor: text;
+}
+
+/* Focus indicator for the cell with caret - matches component theme */
+.editor-input td:has(> *:focus),
+.editor-input th:has(> *:focus) {
+  outline: 2px solid #007bff;
+  outline-offset: -2px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px #007bff;
+}
+
+/* Selection highlight - consistent with theme colors */
+.editor-input td.selected,
+.editor-input th.selected {
+  background: #e3f2fd;
+  border-color: #90caf9;
+}
+
+/* Table row hover effect */
+.editor-input tr:hover td {
+  background: #f8f9fa;
+}
+
+.editor-input tr:hover th {
+  background: #e9ecef;
+}
+
+/* Ensure focused cell takes priority over row hover */
+.editor-input tr:hover td:has(> *:focus),
+.editor-input tr:hover th:has(> *:focus) {
+  background: #fff;
+}
+
+/* Table border styling for better definition */
+.editor-input table tbody tr:first-child td,
+.editor-input table tbody tr:first-child th {
+  border-top: none;
+}
+
+.editor-input table tr td:first-child,
+.editor-input table tr th:first-child {
+  border-left: none;
+}
+
+.editor-input table tr td:last-child,
+.editor-input table tr th:last-child {
+  border-right: none;
+}
+
+.editor-input table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Ensure table content is properly styled */
+.editor-input table p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Table cell content alignment */
+.editor-input td > *,
+.editor-input th > * {
+  margin: 0;
+}
+
+/* Theme-based table classes for Lexical nodes */
+.editor-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.editor-table-cell {
+  border: 1px solid #e1e5e9;
+  padding: 8px 12px;
+  vertical-align: top;
+  position: relative;
+  transition: background-color 0.15s ease;
+  background: white;
+  color: #495057;
+}
+
+.editor-table-cell-header {
+  border: 1px solid #e1e5e9;
+  padding: 8px 12px;
+  vertical-align: top;
+  position: relative;
+  transition: background-color 0.15s ease;
+  background: #f8f9fa;
+  font-weight: 500;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+}
+
+/* Hover effects for theme-based table cells */
+.editor-table-cell:hover,
+.editor-table-cell-header:hover {
+  background: #f1f6ff;
+  cursor: text;
+}
+
+/* Focus states for theme-based cells */
+.editor-table-cell:focus-within,
+.editor-table-cell-header:focus-within {
+  outline: 2px solid #007bff;
+  outline-offset: -2px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px #007bff;
+}
+
+/* Responsive table styling */
+@media (max-width: 768px) {
+  .editor-input table,
+  .editor-table {
+    font-size: 13px;
+  }
+  
+  .editor-input th,
+  .editor-input td,
+  .editor-table-cell,
+  .editor-table-cell-header {
+    padding: 6px 8px;
+  }
+}
+
+/* Ensure table doesn't break layout */
+.editor-input table,
+.editor-table {
+  table-layout: auto;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Table selection styling */
+.editor-input table.selected,
+.editor-table.selected {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Improved table cell text styling */
+.editor-input td p,
+.editor-input th p,
+.editor-table-cell p,
+.editor-table-cell-header p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Ensure proper text formatting within cells */
+.editor-input td .editor-text-bold,
+.editor-input th .editor-text-bold,
+.editor-table-cell .editor-text-bold,
+.editor-table-cell-header .editor-text-bold {
+  font-weight: bold;
+}
+
+.editor-input td .editor-text-italic,
+.editor-input th .editor-text-italic,
+.editor-table-cell .editor-text-italic,
+.editor-table-cell-header .editor-text-italic {
+  font-style: italic;
+}
+
+.editor-input td .editor-text-underline,
+.editor-input th .editor-text-underline,
+.editor-table-cell .editor-text-underline,
+.editor-table-cell-header .editor-text-underline {
+  text-decoration: underline;
+}
+
+.editor-paragraph {
+  margin: 0;
+  padding: 0;
+}
+
+/* .editor-heading-h1 {
+  font-size: 24px;
+  color: rgb(5, 5, 5);
+  font-weight: 400;
+  margin: 0;
+  margin-bottom: 12px;
+  padding: 0;
+} */
+.editor-heading-h1,
+.editor-heading-h2,
+.editor-heading-h3 {
+  padding: 0.25rem 0;
+  margin: 0.25rem 0;
+}
+
+.editor-heading-h1 {
+  font-size: 20px;
+}
+
+.editor-heading-h2 {
+  font-size: 18px;
+}
+
+.editor-heading-h3 {
+  font-size: 16px;
+}
+
+.editor-heading-h4 {
+  font-size: 15px;
+  padding: 0.25rem 0;
+  margin: 0.25rem 0;
+}
+
+.editor-heading-h5 {
+  font-size: 14px;
+  padding: 0.25rem 0;
+  margin: 0.25rem 0;
+}
+
+.editor-heading-h6 {
+  font-size: 13px;
+  padding: 0.25rem 0;
+  margin: 0.25rem 0;
+}
+
+.editor-input ul,
+.editor-input ol {
+  padding-left: 20px;
+  margin: 0.5rem 0;
+}
+
+.editor-input li {
+  margin-bottom: 0.25rem;
+}
+
+.editor-input li:last-child {
+  margin-bottom: 0;
+}
+
+/* Nested list item styling - removes double bullets */
+.editor-nested-listitem {
+  list-style: none;
+}
+
+.editor-nested-listitem::marker {
+  content: none;
+}
+
+.editor-input p + ul,
+.editor-input p + ol,
+.editor-input ul + p,
+.editor-input ol + p {
+  margin-top: 0.5rem;
+}
+
+
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0; /* prevent any bottom gap under toolbar */
+  background: white;
+  padding: 8px 10px;
+  position: relative;
+  z-index: 10;
+  border-bottom: 1px solid #eee;
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+  height: 52px;
+  box-sizing: border-box;
+  gap: 6px;
+}
+
+.streamlit-lexical-editor {
+  color-scheme: light;
+}
+
+.streamlit-lexical-editor * {
+  color: #555;
+}
+
+/* Hard override any global margins that Streamlit or other CSS may apply to buttons/selects */
+.toolbar button,
+.toolbar select {
+  margin: 0 !important;
+}
+
+/* Ensure no vertical margins leak onto any direct toolbar children */
+.toolbar > * {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Also enforce zero vertical margins for all toolbar descendants */
+.toolbar * {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.toolbar button.toolbar-item {
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border-radius: 8px;
+  padding: 6px;
+  cursor: pointer;
+  height: 36px;
+  width: 36px;
+  box-sizing: border-box;
+  line-height: 0;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.toolbar button.toolbar-item:disabled {
+  cursor: not-allowed;
+}
+
+.toolbar button.toolbar-item.spaced {
+  margin-right: 4px;
+}
+
+.toolbar button.toolbar-item i.format {
+  background-size: 20px 20px;
+  display: block;
+  height: 20px;
+  width: 20px;
+  opacity: 0.6;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.toolbar button.toolbar-item:disabled i.format {
+  opacity: 0.2;
+}
+
+.toolbar button.toolbar-item.active {
+  background-color: rgba(223, 232, 250, 0.3);
+}
+
+.toolbar button.toolbar-item.active i {
+  opacity: 1;
+}
+
+.toolbar .toolbar-item:hover:not([disabled]) {
+  background-color: #eee;
+}
+
+.toolbar .divider {
+  width: 1px;
+  background-color: #ddd;
+  margin: 0 8px;
+  height: 28px;
+  align-self: center;
+}
+
+/* Insert Table popover */
+.table-button-container {
+  position: relative;
+  display: flex; /* behave like other flex items */
+  align-items: center;
+  align-self: center;
+  height: 36px;
+  line-height: 0; /* avoid baseline shift */
+  margin: 0 !important;
+}
+
+/* Enforce exact sizing and zero vertical margins for the table button */
+.table-button-container > .toolbar-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  width: 36px;
+  padding: 6px;
+  margin: 0 4px 0 0 !important;
+  line-height: 0;
+}
+
+.table-insert-popover {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 4px;
+  background: white;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 12px;
+  border-radius: 8px;
+  z-index: 1000;
+  min-width: 200px;
+}
+.table-insert-grid {
+  display: grid;
+  grid-template-rows: repeat(10, 18px);
+  grid-auto-flow: row;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+.table-insert-row {
+  display: grid;
+  grid-template-columns: repeat(10, 18px);
+  gap: 3px;
+}
+.table-insert-cell {
+  width: 18px;
+  height: 18px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+.table-insert-cell:hover {
+  border-color: #007bff;
+}
+.table-insert-cell.active {
+  background: #007bff;
+  border-color: #007bff;
+}
+.table-insert-footer {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Context menu for table actions - compact horizontal layout */
+.table-context-menu {
+  background: white;
+  border: 1px solid #ddd;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  border-radius: 6px;
+  padding: 8px;
+  z-index: 1000;
+  width: 200px;
+  max-width: 200px;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.table-context-menu .menu-section {
+  margin-bottom: 6px;
+}
+
+.table-context-menu .menu-section:last-child {
+  margin-bottom: 0;
+}
+
+.table-context-menu .section-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.table-context-menu .divider {
+  height: 1px;
+  background: #eee;
+  margin: 8px 0;
+}
+
+.table-context-menu .button-row {
+  display: flex;
+  gap: 4px;
+}
+
+.table-context-menu button {
+  flex: 1;
+  background: transparent;
+  border: 1px solid #ddd;
+  text-align: center;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #444;
+  font-size: 12px;
+  transition: all 0.15s ease;
+}
+
+.table-context-menu button:hover {
+  background: #f5f5f5;
+  border-color: #007bff;
+}
+
+.table-context-menu button.danger {
+  color: #d73a49;
+  border-color: #d73a49;
+}
+
+.table-context-menu button.danger:hover {
+  background: #ffeaea;
+  border-color: #d73a49;
+}
+
+/* Chevron button for table cell actions - positioned within editor bounds */
+.table-cell-chevron {
+  width: 16px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: all 0.15s ease;
+  padding: 0;
+  margin: 0;
+  /* Ensure button stays within editor bounds */
+  max-width: 16px;
+  max-height: 16px;
+  overflow: hidden;
+}
+
+.table-cell-chevron:hover {
+  background: white;
+  border-color: #007bff;
+  color: #007bff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transform: scale(1.05);
+}
+
+.table-cell-chevron:active {
+  transform: scale(0.95);
+}
+
+.toolbar .toolbar-item .text {
+  display: flex;
+  line-height: 20px;
+  width: 200px;
+  vertical-align: middle;
+  font-size: 14px;
+  color: #777;
+  text-overflow: ellipsis;
+  width: 70px;
+  overflow: hidden;
+  height: 20px;
+  text-align: left;
+}
+
+.toolbar .toolbar-item .icon {
+  display: flex;
+  width: 20px;
+  height: 20px;
+  user-select: none;
+  margin-right: 8px;
+  line-height: 16px;
+  background-size: contain;
+}
+
+.toolbar select.toolbar-item {
+  border: none;
+  border-radius: 8px;
+  background-color: white;
+  color: #555;
+  font-size: 14px;
+  padding: 0 32px 0 10px;
+  margin: 0 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  height: 36px;
+  box-sizing: border-box;
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 36px;
+}
+
+.toolbar select.toolbar-item:hover {
+  background-color: #f0f0f0;
+}
+
+.toolbar select.toolbar-item:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+}
+
+/* Remove default arrow in some browsers */
+.toolbar select.toolbar-item::-ms-expand {
+  display: none;
+}
+
+/* Custom arrow */
+.toolbar select.toolbar-item {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23555555%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px 12px;
+  padding-right: 36px;
+}
+
+i.undo {
+  background-image: url(icons/arrow-counterclockwise.svg);
+}
+
+i.redo {
+  background-image: url(icons/arrow-clockwise.svg);
+}
+
+i.bold {
+  background-image: url(icons/type-bold.svg);
+}
+
+i.italic {
+  background-image: url(icons/type-italic.svg);
+}
+
+i.underline {
+  background-image: url(icons/type-underline.svg);
+}
+
+i.table {
+  background-image: url(icons/table.svg);
+}
+
+i.strikethrough {
+  background-image: url(icons/type-strikethrough.svg);
+}
+
+i.quote {
+  background-image: url(icons/quote.svg);
+}
+
+i.list-ul {
+  background-image: url(icons/list-ul.svg);
+}
+
+i.list-ol {
+  background-image: url(icons/list-ol.svg);
+}
+
+
+
+/* Link Dialog Styles */
+.link-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.link-dialog {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  min-width: 400px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.link-dialog-field {
+  margin-bottom: 16px;
+}
+
+.link-dialog-field label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+  color: #333;
+}
+
+.link-dialog-field input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.link-dialog-field input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.link-dialog-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.link-dialog-buttons button {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s ease;
+}
+
+.link-dialog-buttons button:hover {
+  background: #f5f5f5;
+}
+
+.link-dialog-buttons button[type="submit"] {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.link-dialog-buttons button[type="submit"]:hover:not(:disabled) {
+  background: #0056b3;
+  border-color: #0056b3;
+}
+
+.link-dialog-buttons button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.link-dialog-buttons button:disabled:hover {
+  background: white;
+}
+
+/* Table button styling is defined by the dedicated `.table-btn` rules above */
+
+.editor-text-bold {
+  font-weight: bold;
+}
+
+.editor-text-italic {
+  font-style: italic;
+}
+
+.editor-text-underline {
+  text-decoration: underline;
+}
+
+.editor-text-bold.editor-text-italic {
+  font-weight: bold;
+  font-style: italic;
+}
+
+.editor-text-bold.editor-text-underline {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.editor-text-italic.editor-text-underline {
+  font-style: italic;
+  text-decoration: underline;
+}
+
+.editor-text-bold.editor-text-italic.editor-text-underline {
+  font-weight: bold;
+  font-style: italic;
+  text-decoration: underline;
+}
+
+.editor-text-strikethrough {
+  text-decoration: line-through;
+}
+
+.editor-text-strikethrough.editor-text-underline {
+  text-decoration: line-through underline;
+}
+
+.editor-text-bold.editor-text-strikethrough {
+  font-weight: bold;
+  text-decoration: line-through;
+}
+
+.editor-text-italic.editor-text-strikethrough {
+  font-style: italic;
+  text-decoration: line-through;
+}
+
+.editor-text-bold.editor-text-italic.editor-text-strikethrough {
+  font-weight: bold;
+  font-style: italic;
+  text-decoration: line-through;
+}
+
+.editor-text-bold.editor-text-underline.editor-text-strikethrough {
+  font-weight: bold;
+  text-decoration: line-through underline;
+}
+
+.editor-text-italic.editor-text-underline.editor-text-strikethrough {
+  font-style: italic;
+  text-decoration: line-through underline;
+}
+
+.editor-text-bold.editor-text-italic.editor-text-underline.editor-text-strikethrough {
+  font-weight: bold;
+  font-style: italic;
+  text-decoration: line-through underline;
+}
+
+/* Quote Styles */
+.editor-quote {
+  margin: 0.75rem 0;
+  padding: 0.5rem 1rem;
+  border-left: 4px solid #ddd;
+  background: #f8f9fa;
+  font-style: italic;
+  color: #666;
+}
+
+/* Link Styles */
+.editor-link {
+  color: #007bff;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.editor-link:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* List Styles */
+.editor-list-ol {
+  padding-left: 20px;
+  margin: 0.5rem 0;
+}
+
+.editor-list-ul {
+  padding-left: 20px;
+  margin: 0.5rem 0;
+}
+
+.editor-listitem {
+  margin-bottom: 0.25rem;
+}
+
+.editor-listitem:last-child {
+  margin-bottom: 0;
+}
