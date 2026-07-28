@@ -312,8 +312,8 @@ def test_formatting_independent_between_editors(page: Page, multiple_editors_ser
     for _ in range(9):
         page.keyboard.press("Shift+ArrowLeft")
     
-    # Make bold
-    page.keyboard.press("Meta+B")
+    # Make bold via toolbar button
+    page.get_by_role("button", name="Format Bold").first.click()
     page.wait_for_timeout(500)
     
     # Editor A should have bold element
