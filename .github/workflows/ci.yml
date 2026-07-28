@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -17,8 +20,8 @@ jobs:
   frontend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: actions/setup-node@v4.2.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: npm
@@ -42,8 +45,8 @@ jobs:
           - python: "3.13"
             streamlit: ">=1.51"
     steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: actions/setup-python@v5.4.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
           cache: pip
@@ -55,13 +58,13 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: actions/setup-node@v4.2.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: npm
           cache-dependency-path: streamlit_lexical_extended/frontend/package-lock.json
-      - uses: actions/setup-python@v5.4.0
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
           cache: pip
@@ -80,13 +83,13 @@ jobs:
   package:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: actions/setup-node@v4.2.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: npm
           cache-dependency-path: streamlit_lexical_extended/frontend/package-lock.json
-      - uses: actions/setup-python@v5.4.0
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
           cache: pip
@@ -100,7 +103,7 @@ jobs:
           python -m pip install build twine
           python -m build
           python -m twine check dist/*
-      - uses: actions/upload-artifact@v4.6.1
+      - uses: actions/upload-artifact@v4
         with:
           name: python-distributions
           path: dist/
