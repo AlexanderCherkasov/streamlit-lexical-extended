@@ -39,6 +39,7 @@ def test_api_returns_result_and_mounts_v2_contract(component_spy):
                 "minHeight": 240,
                 "debounce": 250,
                 "fixedHeight": None,
+                "toolbar": None,
             },
             "default": {"value": "# Native"},
             "width": 640,
@@ -69,6 +70,21 @@ def test_fixed_height_uses_native_mounting_size(component_spy):
     assert component_spy[0]["height"] == 360
     assert component_spy[0]["data"]["fixedHeight"] == 360
     assert component_spy[0]["width"] == "stretch"
+
+
+def test_toolbar_configuration_is_normalized_for_frontend(component_spy):
+    lexical.streamlit_lexical_extended(
+        toolbar=("undo", "redo", "bold", "table"),
+    )
+    lexical.streamlit_lexical_extended(toolbar=[])
+
+    assert component_spy[0]["data"]["toolbar"] == [
+        "undo",
+        "redo",
+        "bold",
+        "table",
+    ]
+    assert component_spy[1]["data"]["toolbar"] == []
 
 
 def test_callback_reads_native_result_from_session_state(monkeypatch):
@@ -109,6 +125,11 @@ def test_callback_reads_native_result_from_session_state(monkeypatch):
         ({"width": "wide"}, ValueError),
         ({"width": 0}, ValueError),
         ({"width": True}, TypeError),
+        ({"toolbar": "bold"}, TypeError),
+        ({"toolbar": {"bold"}}, TypeError),
+        ({"toolbar": ["bold", 1]}, TypeError),
+        ({"toolbar": ["link"]}, ValueError),
+        ({"toolbar": ["bold", "bold"]}, ValueError),
     ],
 )
 def test_argument_validation(component_spy, kwargs, exception):

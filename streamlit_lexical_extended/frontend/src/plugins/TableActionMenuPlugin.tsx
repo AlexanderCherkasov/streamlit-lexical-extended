@@ -15,6 +15,10 @@ import {
   $getNodeTriplet,
 } from '@lexical/table'
 
+function isRtl(element: HTMLElement): boolean {
+  return element.ownerDocument.defaultView?.getComputedStyle(element).direction === 'rtl'
+}
+
 function useRootElement(editor: LexicalEditor) {
   const [root, setRoot] = useState<HTMLElement | null>(null)
   useEffect(() => {
@@ -174,19 +178,25 @@ export default function TableActionMenuPlugin() {
     const cellRelativeTop = cellRect.top - rootRect.top
     const cellRelativeRight = cellRect.right - rootRect.left
     
-    // Position menu to the right of the cell, or left if not enough space
-    let x = cellRelativeRight + 5
+    const rtl = isRtl(root)
+    // Open toward inline-end first: left in RTL, right in LTR.
+    let x = rtl
+      ? cellRelativeLeft - menuWidth - 5
+      : cellRelativeRight + 5
     let y = cellRelativeTop
     
     // Ensure menu stays within component bounds (with padding)
     const padding = 10
-    if (x + menuWidth > rootRect.width - padding) {
-      // Not enough space on the right, position on the left
-      x = cellRelativeLeft - menuWidth - 5
-      if (x < padding) {
-        // Not enough space on either side, center it
-        x = Math.max(padding, (rootRect.width - menuWidth) / 2)
-      }
+    const exceedsInlineEnd = rtl
+      ? x < padding
+      : x + menuWidth > rootRect.width - padding
+    if (exceedsInlineEnd) {
+      x = rtl
+        ? cellRelativeRight + 5
+        : cellRelativeLeft - menuWidth - 5
+    }
+    if (x < padding || x + menuWidth > rootRect.width - padding) {
+      x = Math.max(padding, (rootRect.width - menuWidth) / 2)
     }
     
     if (y + menuHeight > rootRect.height - padding) {
@@ -208,11 +218,14 @@ export default function TableActionMenuPlugin() {
         
         // Calculate position relative to editor container
         const cellRelativeTop = cellRect.top - rootRect.top
+        const cellRelativeLeft = cellRect.left - rootRect.left
         const cellRelativeRight = cellRect.right - rootRect.left
         
-        // Position chevron button within cell, but ensure it stays within editor bounds
+        // Keep the action affordance at inline-end: left in RTL, right in LTR.
         let top = cellRelativeTop + (chevronButton.cellElement.offsetHeight / 2) - 8
-        let left = cellRelativeRight - 20
+        let left = isRtl(root)
+          ? cellRelativeLeft + 4
+          : cellRelativeRight - 20
         
         // Ensure button stays within editor bounds
         const buttonSize = 16
@@ -271,8 +284,12 @@ export default function TableActionMenuPlugin() {
           <div className="menu-section">
             <span className="section-label">Column</span>
             <div className="button-row">
-              <button onClick={() => run(() => $insertTableColumnAtSelection(false))}>+Left</button>
-              <button onClick={() => run(() => $insertTableColumnAtSelection(true))}>+Right</button>
+              <button onClick={() => run(() => $insertTableColumnAtSelection(false))}>
+                {isRtl(root) ? '+Right' : '+Left'}
+              </button>
+              <button onClick={() => run(() => $insertTableColumnAtSelection(true))}>
+                {isRtl(root) ? '+Left' : '+Right'}
+              </button>
               <button onClick={() => run(() => $deleteTableColumnAtSelection())}>Delete</button>
             </div>
           </div>

@@ -9,12 +9,20 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable"
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin"
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin"
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary"
-import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin"
-import ToolbarPlugin from "./plugins/ToolbarPlugin"
+import ToolbarPlugin, {
+  DEFAULT_TOOLBAR_TOOLS,
+  type ToolbarTool,
+} from "./plugins/ToolbarPlugin"
 
 import theme from "./theme"
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin"
-import { $getRoot, CLEAR_HISTORY_COMMAND, type EditorState } from "lexical"
+import {
+  $getRoot,
+  CLEAR_HISTORY_COMMAND,
+  SKIP_SELECTION_FOCUS_TAG,
+  type EditorState,
+  type LexicalEditor,
+} from "lexical"
 import {
   $convertFromMarkdownString,
   $convertToMarkdownString,
@@ -32,6 +40,8 @@ import { TableCellNode, TableNode, TableRowNode } from "@lexical/table"
 import { TablePlugin } from "@lexical/react/LexicalTablePlugin"
 import TableActionMenuPlugin from "./plugins/TableActionMenuPlugin"
 import { TABLE_TRANSFORMER, $convertMarkdownTablesToTableNodes } from "./markdown/tableTransformer"
+
+const EXTERNAL_UPDATE_TAG = "streamlit-lexical-external-update"
 
 // Filter out link transformers from default TRANSFORMERS
 const SAFE_TRANSFORMERS = TRANSFORMERS.filter(transformer => {
@@ -55,9 +65,11 @@ export interface StreamlitLexicalData {
   debounce: number
   minHeight: number
   fixedHeight: number | null
+  toolbar: ToolbarTool[] | null
 }
 
 interface StreamlitLexicalProps extends StreamlitLexicalData {
+  direction: "ltr" | "rtl"
   instanceKey: string
   setStateValue: FrontendRendererArgs<
     StreamlitLexicalState,
@@ -71,6 +83,8 @@ function StreamlitLexical({
   debounce,
   minHeight,
   fixedHeight,
+  toolbar,
+  direction,
   instanceKey,
   setStateValue,
 }: StreamlitLexicalProps) {
@@ -119,7 +133,15 @@ function StreamlitLexical({
 
   // Handle editor changes with proper debouncing
   const handleEditorChange = useCallback(
-    (editorState: EditorState) => {
+    (
+      editorState: EditorState,
+      _editor: LexicalEditor,
+      tags: Set<string>,
+    ) => {
+      if (tags.has(EXTERNAL_UPDATE_TAG)) {
+        return
+      }
+
       editorState.read(() => {
         const markdown = $convertToMarkdownString(
           [TABLE_TRANSFORMER, ...SAFE_TRANSFORMERS],
@@ -160,9 +182,12 @@ function StreamlitLexical({
         minHeight: `${minHeight}px`,
         overflowY: "visible",
       }
+  const toolbarTools = toolbar ?? DEFAULT_TOOLBAR_TOOLS
+  const hasToolbar = toolbarTools.length > 0
 
   return (
     <div
+      dir={direction}
       className={`streamlit-lexical-editor ${
         isFixedHeight ? "is-fixed-height" : "is-auto-height"
       }`}
@@ -172,9 +197,15 @@ function StreamlitLexical({
         <EditorContentUpdater
           content={value}
           currentMarkdownRef={currentMarkdownRef}
+          debounceTimerRef={debounceTimerRef}
+          setStateValue={setStateValue}
         />
-        <div className="editor-container">
-          <ToolbarPlugin />
+        <div
+          className={`editor-container ${
+            hasToolbar ? "with-toolbar" : "without-toolbar"
+          }`}
+        >
+          {hasToolbar && <ToolbarPlugin tools={toolbarTools} />}
           <div className="editor-inner">
             <RichTextPlugin
               contentEditable={
@@ -187,7 +218,6 @@ function StreamlitLexical({
               ErrorBoundary={LexicalErrorBoundary}
             />
             <HistoryPlugin />
-            <AutoFocusPlugin />
             <MarkdownShortcutPlugin transformers={[TABLE_TRANSFORMER, ...SAFE_TRANSFORMERS]} />
             <ListPlugin />
             <TabIndentationPlugin />
@@ -204,9 +234,13 @@ function StreamlitLexical({
 function EditorContentUpdater({
   content,
   currentMarkdownRef,
+  debounceTimerRef,
+  setStateValue,
 }: {
   content: string | null
   currentMarkdownRef: React.MutableRefObject<string>
+  debounceTimerRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>
+  setStateValue: StreamlitLexicalProps["setStateValue"]
 }) {
   const [editor] = useLexicalComposerContext()
   const prevContentRef = useRef<string | null>(content)
@@ -232,24 +266,43 @@ function EditorContentUpdater({
       return
     }
 
-    editor.update(() => {
-      const root = $getRoot()
-      root.clear()
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+      debounceTimerRef.current = null
+    }
 
-      if (content) {
-        $convertFromMarkdownString(
-          content,
-          [TABLE_TRANSFORMER, ...SAFE_TRANSFORMERS],
-          undefined,
-          true
-        )
-        $convertMarkdownTablesToTableNodes()
-      }
+    editor.update(
+      () => {
+        const root = $getRoot()
+        root.clear()
 
-      editor.dispatchCommand(CLEAR_HISTORY_COMMAND, undefined)
-      currentMarkdownRef.current = content
-    })
-  }, [editor, content, currentMarkdownRef])
+        if (content) {
+          $convertFromMarkdownString(
+            content,
+            [TABLE_TRANSFORMER, ...SAFE_TRANSFORMERS],
+            undefined,
+            true
+          )
+          $convertMarkdownTablesToTableNodes()
+        }
+
+        editor.dispatchCommand(CLEAR_HISTORY_COMMAND, undefined)
+        currentMarkdownRef.current = content
+      },
+      {
+        onUpdate: () => {
+          setStateValue("value", content)
+        },
+        tag: [EXTERNAL_UPDATE_TAG, SKIP_SELECTION_FOCUS_TAG],
+      },
+    )
+  }, [
+    editor,
+    content,
+    currentMarkdownRef,
+    debounceTimerRef,
+    setStateValue,
+  ])
 
   return null
 }

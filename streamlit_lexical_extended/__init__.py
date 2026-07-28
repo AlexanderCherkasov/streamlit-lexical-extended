@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, TypeAlias
 
@@ -16,9 +16,23 @@ if TYPE_CHECKING:
 
 Width: TypeAlias = Literal["stretch", "content"] | int
 OnChange: TypeAlias = Callable[[], None] | None
+Toolbar: TypeAlias = Sequence[str] | None
 
 _COMPONENT_NAME = "streamlit-lexical-extended.streamlit_lexical_extended"
 _COMPONENT_HTML = '<div class="streamlit-lexical-react-root"></div>'
+_TOOLBAR_TOOLS = (
+    "undo",
+    "redo",
+    "block_type",
+    "bold",
+    "italic",
+    "underline",
+    "strikethrough",
+    "quote",
+    "bullet_list",
+    "numbered_list",
+    "table",
+)
 
 
 def _read_single_build_asset(pattern: str) -> str:
@@ -95,6 +109,7 @@ def _validate_arguments(
     key: str | None,
     on_change: OnChange,
     width: Width,
+    toolbar: Toolbar,
 ) -> None:
     if value is not None and not isinstance(value, str):
         raise TypeError("value must be a string or None.")
@@ -127,6 +142,20 @@ def _validate_arguments(
             raise ValueError("integer width must be greater than 0.")
     elif width not in ("stretch", "content"):
         raise ValueError('width must be "stretch", "content", or a positive integer.')
+    if toolbar is not None:
+        if isinstance(toolbar, (str, bytes)) or not isinstance(toolbar, Sequence):
+            raise TypeError("toolbar must be a sequence of tool names or None.")
+        if any(not isinstance(tool, str) for tool in toolbar):
+            raise TypeError("every toolbar tool name must be a string.")
+        unknown_tools = sorted(set(toolbar) - set(_TOOLBAR_TOOLS))
+        if unknown_tools:
+            supported = ", ".join(_TOOLBAR_TOOLS)
+            raise ValueError(
+                f"Unknown toolbar tools: {', '.join(unknown_tools)}. "
+                f"Supported tools: {supported}."
+            )
+        if len(set(toolbar)) != len(toolbar):
+            raise ValueError("toolbar tool names must be unique.")
 
 
 def streamlit_lexical_extended(
@@ -138,13 +167,16 @@ def streamlit_lexical_extended(
     key: str | None = None,
     on_change: OnChange = None,
     width: Width = "stretch",
+    toolbar: Toolbar = None,
 ) -> ComponentResult:
     """Mount the editor and return its native Components v2 state object.
 
     The Markdown value is available as ``result.value``. When ``key`` is
     provided, Streamlit stores the result object in ``st.session_state[key]``.
     Pass ``value=None`` to leave the current editor content untouched, or pass
-    ``value=""`` to explicitly clear it.
+    ``value=""`` to explicitly clear it. ``toolbar=None`` displays every
+    control, a sequence displays only those controls, and an empty sequence
+    hides the toolbar.
     """
 
     _validate_arguments(
@@ -156,6 +188,7 @@ def streamlit_lexical_extended(
         key=key,
         on_change=on_change,
         width=width,
+        toolbar=toolbar,
     )
 
     initial_value = value if value is not None else ""
@@ -167,6 +200,7 @@ def streamlit_lexical_extended(
             "minHeight": min_height,
             "debounce": debounce,
             "fixedHeight": height,
+            "toolbar": list(toolbar) if toolbar is not None else None,
         },
         "default": {"value": initial_value},
         "width": width,

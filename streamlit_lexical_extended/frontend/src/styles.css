@@ -2,12 +2,16 @@
   display: block;
   width: 100%;
   min-width: 0;
+  direction: inherit;
+  text-align: start;
 }
 
 .streamlit-lexical-react-root,
 .streamlit-lexical-editor {
   width: 100%;
   min-width: 0;
+  direction: inherit;
+  text-align: start;
 }
 
 .streamlit-lexical-react-root:has(.is-fixed-height),
@@ -38,8 +42,9 @@
   position: absolute;
   font-size: 14px;
   font-family: "Source Sans Pro", sans-serif;
-  top: 0.6rem;
-  left: 0.55rem;
+  inset-block-start: 0.6rem;
+  inset-inline-start: 0.55rem;
+  text-align: start;
   user-select: none;
   pointer-events: none;
 }
@@ -52,7 +57,8 @@
   height: 36px;
   width: 36px;
   padding: 6px;
-  margin: 0 4px 0 0 !important;
+  margin-block: 0 !important;
+  margin-inline: 0 4px !important;
   border: 0;
   border-radius: 8px;
   background: none;
@@ -84,7 +90,8 @@
   position: relative;
   line-height: 20px;
   font-weight: 400;
-  text-align: left;
+  direction: inherit;
+  text-align: start;
   border-radius: 0.25rem;
   background-color: white;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -119,7 +126,34 @@
   flex-grow: 1;
   overflow-y: auto;
   line-height: 1.2;
+  direction: inherit;
+  text-align: start;
+  unicode-bidi: plaintext;
   /* margin-top: -1px; */
+}
+
+.editor-container.without-toolbar .editor-input {
+  border-radius: 0.25rem;
+}
+
+.streamlit-lexical-editor[dir="rtl"] .editor-input :is(
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  blockquote,
+  ul,
+  ol,
+  li,
+  table,
+  th,
+  td
+) {
+  direction: rtl;
+  text-align: start;
 }
 
 /* Tables - Enhanced styling for better visual experience */
@@ -203,12 +237,12 @@
 
 .editor-input table tr td:first-child,
 .editor-input table tr th:first-child {
-  border-left: none;
+  border-inline-start: none;
 }
 
 .editor-input table tr td:last-child,
 .editor-input table tr th:last-child {
-  border-right: none;
+  border-inline-end: none;
 }
 
 .editor-input table tbody tr:last-child td {
@@ -390,7 +424,8 @@
 
 .editor-input ul,
 .editor-input ol {
-  padding-left: 20px;
+  padding-inline-start: 20px;
+  padding-inline-end: 0;
   margin: 0.5rem 0;
 }
 
@@ -423,6 +458,7 @@
 .toolbar {
   display: flex;
   align-items: center;
+  direction: inherit;
   margin-bottom: 0; /* prevent any bottom gap under toolbar */
   background: white;
   padding: 8px 10px;
@@ -483,7 +519,7 @@
 }
 
 .toolbar button.toolbar-item.spaced {
-  margin-right: 4px;
+  margin-inline-end: 4px;
 }
 
 .toolbar button.toolbar-item i.format {
@@ -515,7 +551,8 @@
 .toolbar .divider {
   width: 1px;
   background-color: #ddd;
-  margin: 0 8px;
+  margin-block: 0;
+  margin-inline: 8px;
   height: 28px;
   align-self: center;
 }
@@ -539,14 +576,15 @@
   height: 36px;
   width: 36px;
   padding: 6px;
-  margin: 0 4px 0 0 !important;
+  margin-block: 0 !important;
+  margin-inline: 0 4px !important;
   line-height: 0;
 }
 
 .table-insert-popover {
   position: absolute;
   top: 100%;
-  left: 50%;
+  inset-inline-start: 50%;
   transform: translateX(-50%);
   margin-top: 4px;
   background: white;
@@ -713,7 +751,7 @@
   width: 70px;
   overflow: hidden;
   height: 20px;
-  text-align: left;
+  text-align: start;
 }
 
 .toolbar .toolbar-item .icon {
@@ -721,7 +759,7 @@
   width: 20px;
   height: 20px;
   user-select: none;
-  margin-right: 8px;
+  margin-inline-end: 8px;
   line-height: 16px;
   background-size: contain;
 }
@@ -732,8 +770,10 @@
   background-color: white;
   color: #555;
   font-size: 14px;
-  padding: 0 32px 0 10px;
-  margin: 0 4px;
+  padding-block: 0;
+  padding-inline: 10px 32px;
+  margin-block: 0;
+  margin-inline: 4px;
   cursor: pointer;
   transition: background-color 0.2s ease;
   height: 36px;
@@ -766,7 +806,11 @@
   background-repeat: no-repeat;
   background-position: right 10px center;
   background-size: 12px 12px;
-  padding-right: 36px;
+  padding-inline-end: 36px;
+}
+
+.streamlit-lexical-editor[dir="rtl"] .toolbar select.toolbar-item {
+  background-position: left 10px center;
 }
 
 i.undo {
@@ -815,8 +859,7 @@ i.list-ol {
 .link-dialog-overlay {
   position: fixed;
   top: 0;
-  left: 0;
-  right: 0;
+  inset-inline: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
@@ -979,7 +1022,7 @@ i.list-ol {
 .editor-quote {
   margin: 0.75rem 0;
   padding: 0.5rem 1rem;
-  border-left: 4px solid #ddd;
+  border-inline-start: 4px solid #ddd;
   background: #f8f9fa;
   font-style: italic;
   color: #666;
@@ -999,12 +1042,14 @@ i.list-ol {
 
 /* List Styles */
 .editor-list-ol {
-  padding-left: 20px;
+  padding-inline-start: 20px;
+  padding-inline-end: 0;
   margin: 0.5rem 0;
 }
 
 .editor-list-ul {
-  padding-left: 20px;
+  padding-inline-start: 20px;
+  padding-inline-end: 0;
   margin: 0.5rem 0;
 }
 
@@ -1135,6 +1180,6 @@ i.list-ol {
 }
 
 .editor-quote {
-  border-left-color: var(--lexical-border);
+  border-inline-start-color: var(--lexical-border);
   color: var(--lexical-muted-text);
 }

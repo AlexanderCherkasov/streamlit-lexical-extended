@@ -5,11 +5,17 @@ from pathlib import Path
 
 import pytest
 import requests
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Locator, Page, expect
 
 
 TEST_PORT_MULTIPLE = 8504
 TEST_URL_MULTIPLE = f"http://127.0.0.1:{TEST_PORT_MULTIPLE}"
+
+
+def text_content(locator: Locator) -> str:
+    value = locator.text_content()
+    assert value is not None
+    return value
 
 
 def wait_for_server(url: str, timeout: float = 30.0) -> None:
@@ -134,7 +140,7 @@ def test_editors_work_independently(page: Page, multiple_editors_server: str):
     expect(editor_a).to_contain_text(text_a)
     
     # Editor B should NOT have this text
-    editor_b_text = editor_b.text_content()
+    editor_b_text = text_content(editor_b)
     assert text_a not in editor_b_text, "Text leaked to Editor B!"
     
     # Now type in editor B
@@ -151,7 +157,7 @@ def test_editors_work_independently(page: Page, multiple_editors_server: str):
     expect(editor_b).to_contain_text(text_b)
     
     # Editor A should NOT have Editor B's text
-    editor_a_text = editor_a.text_content()
+    editor_a_text = text_content(editor_a)
     assert text_b not in editor_a_text, "Text leaked to Editor A!"
     
     # Both should have their respective content
@@ -241,8 +247,8 @@ def test_no_namespace_collision(page: Page, multiple_editors_server: str):
     page.wait_for_timeout(1000)
     
     # Each editor should have only its own text
-    a_text = editor_a.text_content()
-    b_text = editor_b.text_content()
+    a_text = text_content(editor_a)
+    b_text = text_content(editor_b)
     
     assert "A1" in a_text and "A2" in a_text
     assert "B1" in b_text and "B2" in b_text
@@ -276,8 +282,8 @@ def test_rapid_switching_between_editors(page: Page, multiple_editors_server: st
     page.wait_for_timeout(1000)
     
     # Both editors should have all their respective content
-    a_text = editor_a.text_content()
-    b_text = editor_b.text_content()
+    a_text = text_content(editor_a)
+    b_text = text_content(editor_b)
     
     for i in range(5):
         assert f"A{i}" in a_text, f"A{i} missing from editor A"

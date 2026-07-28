@@ -24,6 +24,10 @@ All notable changes to streamlit-lexical-extended will be documented in this fil
 ### Added
 
 - Native `width` support for the public API.
+- Per-editor `toolbar` configuration with a full default, selected controls,
+  or a completely hidden toolbar.
+- Automatic RTL inheritance from the parent Streamlit application, including
+  logical toolbar spacing, lists, quotes, tables, and table action overlays.
 - Explicit argument validation using `TypeError` and `ValueError`.
 - Tests for native state, callbacks, update semantics, direct-DOM rendering,
   multiple editors, fixed/automatic height, formatting, tables, and console

@@ -12,6 +12,8 @@ TEST_PORT = int(os.environ.get("STREAMLIT_TEST_PORT", "8503"))
 TEST_URL = f"http://127.0.0.1:{TEST_PORT}"
 EXAMPLE_PORT = TEST_PORT + 2
 EXAMPLE_URL = f"http://127.0.0.1:{EXAMPLE_PORT}"
+RTL_PORT = TEST_PORT + 3
+RTL_URL = f"http://127.0.0.1:{RTL_PORT}"
 
 
 def pytest_configure(config):
@@ -112,6 +114,47 @@ def example_server():
     try:
         wait_for_server(EXAMPLE_URL)
         yield EXAMPLE_URL
+    finally:
+        process.terminate()
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+
+
+@pytest.fixture(scope="session")
+def rtl_server():
+    repo_root = Path(__file__).resolve().parents[3]
+    app = Path(__file__).with_name("rtl_app.py")
+
+    environment = os.environ.copy()
+    environment.setdefault("STREAMLIT_BROWSER_GATHER_USAGE_STATS", "false")
+    environment.setdefault("PYTHONUNBUFFERED", "1")
+
+    process = subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "streamlit",
+            "run",
+            str(app),
+            "--server.headless",
+            "true",
+            "--server.port",
+            str(RTL_PORT),
+            "--server.address",
+            "127.0.0.1",
+        ],
+        cwd=repo_root,
+        env=environment,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+
+    try:
+        wait_for_server(RTL_URL)
+        yield RTL_URL
     finally:
         process.terminate()
         try:
