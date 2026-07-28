@@ -2,6 +2,13 @@
 
 All notable changes to streamlit-lexical-extended will be documented in this file.
 
+## [0.3.7] - 2026-07-28
+
+### Fixed
+
+- **Session State Callback Synchronization**: Added callback wrapper in Python API ensuring `st.session_state[key]` and internal state values are updated to `str` before invoking `on_change` callbacks.
+- **External Update Precedence**: Refined React `EditorContentUpdater` to ensure non-null external content changes sent from Python are never swallowed by local typing debounce timers.
+
 ## [0.3.6] - 2026-07-28
 
 ### Changed

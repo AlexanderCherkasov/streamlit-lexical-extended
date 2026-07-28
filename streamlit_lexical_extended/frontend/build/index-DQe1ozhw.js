@@ -24405,18 +24405,18 @@ function gy({ content: e, currentMarkdownRef: t, debounceTimerRef: n, setStateVa
 			i.current = !1;
 			return;
 		}
-		if (i.current) {
-			i.current = !1, o.current = e;
+		if (e === o.current || e === t.current) {
+			i.current = !1;
 			return;
 		}
-		e === o.current || e === t.current || (o.current = e, n.current &&= (clearTimeout(n.current), null), a.update(() => {
+		o.current = e, i.current = !1, n.current &&= (clearTimeout(n.current), null), a.update(() => {
 			Yo().clear(), e && (Fv(my(e), [sy, ...uy], void 0, !0), cy()), a.dispatchCommand(tr, void 0), t.current = e;
 		}, {
 			onUpdate: () => {
 				r("value", e);
 			},
 			tag: [ly, Kr]
-		}));
+		});
 	}, [
 		a,
 		e,

@@ -119,9 +119,7 @@ def test_callback_reads_native_result_from_session_state(monkeypatch):
     monkeypatch.setattr(lexical.st, "session_state", session_state)
 
     def on_change():
-        raw = session_state.get("editor")
-        val = raw.value if hasattr(raw, "value") else raw
-        observed.append(val)
+        observed.append(session_state.get("editor"))
 
     result = lexical.streamlit_lexical_extended(
         value="Initial",
@@ -130,6 +128,7 @@ def test_callback_reads_native_result_from_session_state(monkeypatch):
     )
 
     assert result == "Changed in browser"
+    assert session_state["editor"] == "Changed in browser"
     assert observed == ["Changed in browser"]
 
 

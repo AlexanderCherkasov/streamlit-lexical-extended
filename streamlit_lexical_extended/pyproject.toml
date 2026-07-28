@@ -1,6 +1,6 @@
 [project]
 name = "streamlit-lexical-extended"
-version = "0.3.6"
+version = "0.3.7"
 
 [[tool.streamlit.component.components]]
 name = "streamlit_lexical_extended"

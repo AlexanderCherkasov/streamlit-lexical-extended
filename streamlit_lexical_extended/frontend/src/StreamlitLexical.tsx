@@ -346,18 +346,14 @@ function EditorContentUpdater({
       return
     }
 
-    if (isLocalUpdate.current) {
-      isLocalUpdate.current = false
-      prevContentRef.current = content
-      return
-    }
-
-    // Skip if content hasn't actually changed
+    // Skip if content hasn't actually changed compared to current editor state
     if (content === prevContentRef.current || content === currentMarkdownRef.current) {
+      isLocalUpdate.current = false
       return
     }
 
     prevContentRef.current = content
+    isLocalUpdate.current = false
 
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current)

@@ -201,6 +201,23 @@ def streamlit_lexical_extended(
         else:
             st.session_state[state_key] = value
 
+    def _handle_on_change() -> None:
+        if key is not None and key in st.session_state:
+            raw = st.session_state[key]
+            if hasattr(raw, "value"):
+                val = raw.value
+            elif isinstance(raw, dict):
+                val = raw.get("value", "")
+            else:
+                val = raw or ""
+            if isinstance(val, dict):
+                val = val.get("value", "")
+            if isinstance(val, str):
+                st.session_state[f"_lexical_internal_val_{key}"] = val
+                st.session_state[key] = val
+        if on_change is not None:
+            on_change()
+
     initial_value = value if value is not None else ""
     mount_arguments = {
         "key": key,
@@ -215,7 +232,7 @@ def streamlit_lexical_extended(
         "default": {"value": initial_value},
         "width": width,
         "height": height if height is not None else "content",
-        "on_value_change": on_change or _noop,
+        "on_value_change": _handle_on_change,
     }
     if _ISOLATE_STYLES_AT_MOUNT:
         mount_arguments["isolate_styles"] = True
@@ -234,6 +251,7 @@ def streamlit_lexical_extended(
 
     if key is not None and result_str is not None:
         st.session_state[f"_lexical_internal_val_{key}"] = result_str
+        st.session_state[key] = result_str
 
     return result_str if isinstance(result_str, str) else (value or "")
 
