@@ -7,7 +7,8 @@
 A rich-text Markdown editor for Streamlit, powered by
 [Lexical](https://lexical.dev/). It supports formatting, lists, quotes, code
 blocks, tables, undo/redo, programmatic updates, and multiple independent
-editors.
+editors. Markdown output uses hard-break markers for consecutive plain-text
+lines, so line breaks remain visible when rendered with `st.markdown`.
 
 Version 0.3 uses package-based Streamlit Custom Components v2. The editor
 renders directly in Streamlit's DOM without an iframe.
@@ -26,9 +27,8 @@ pip install streamlit-lexical-extended
 
 ## Quick start
 
-The component returns a native Components v2 `ComponentResult`. Markdown is
-available as `result.value`. When `key` is set, Streamlit stores the same
-result object in `st.session_state[key]` before `on_change` runs.
+The component natively returns a Markdown string (`str`). When `key` is set,
+Streamlit stores the string in `st.session_state[key]`.
 
 ```python
 import streamlit as st
@@ -36,19 +36,19 @@ from streamlit_lexical_extended import streamlit_lexical_extended
 
 
 def editor_changed() -> None:
-    markdown = st.session_state["editor"].value
+    markdown = st.session_state["editor"]
     st.toast(f"Document updated: {len(markdown)} characters")
 
 
-result = streamlit_lexical_extended(
+markdown_text = streamlit_lexical_extended(
     value="# Hello",
     key="editor",
     height=360,
     on_change=editor_changed,
 )
 
-st.markdown(result.value)
-st.code(st.session_state["editor"].value, language="markdown")
+st.markdown(markdown_text)
+st.code(st.session_state["editor"], language="markdown")
 ```
 
 The function accepts `value`, `placeholder`, `height`, `min_height`,
@@ -126,7 +126,7 @@ p, div, input, label, h1, h2, h3, h4, h5, h6 {
 Use a unique `key` for each editor:
 
 ```python
-st.session_state["editor"].value  # Markdown string
+st.session_state["editor"]  # Markdown string
 ```
 
 

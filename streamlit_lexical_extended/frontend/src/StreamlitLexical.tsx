@@ -55,6 +55,89 @@ const SAFE_TRANSFORMERS = TRANSFORMERS.filter(transformer => {
   return true;
 })
 
+const MARKDOWN_FENCE_REGEXP = /^\s{0,3}(`{3,}|~{3,})/
+const MARKDOWN_STRUCTURAL_LINE_REGEXP =
+  /^\s{0,3}(?:#{1,6}(?:\s|$)|>|(?:[-+*]|\d+[.)])\s|\||(?:-{3,}|_{3,}|\*{3,})\s*$)/
+
+/**
+ * Streamlit's Markdown renderer treats a single newline inside a plain-text
+ * block as a soft break and displays it as a space. Lexical paragraphs are
+ * exported as single-newline-separated lines, so preserve visible editor line
+ * breaks with the Markdown hard-break marker (two trailing spaces).
+ *
+ * Structural Markdown blocks must be left untouched: adding trailing spaces to
+ * list, table, quote, heading, or fenced-code lines can change their meaning.
+ */
+function preserveStreamlitLineBreaks(markdown: string): string {
+  const lines = markdown.split("\n")
+  let fence: string | null = null
+
+  return lines
+    .map((line, index) => {
+      const fenceMatch = line.match(MARKDOWN_FENCE_REGEXP)
+      if (fenceMatch) {
+        const marker = fenceMatch[1][0]
+        if (fence === null) {
+          fence = marker
+        } else if (fence === marker) {
+          fence = null
+        }
+        return line
+      }
+
+      if (fence !== null) {
+        return line
+      }
+
+      const nextLine = lines[index + 1]
+      const isPlainLine = (candidate: string): boolean => {
+        if (!candidate.trim() || candidate.startsWith("    ")) {
+          return false
+        }
+        return !MARKDOWN_STRUCTURAL_LINE_REGEXP.test(candidate)
+      }
+
+      if (
+        nextLine &&
+        isPlainLine(line) &&
+        isPlainLine(nextLine) &&
+        !line.endsWith("\\") &&
+        !/ {2,}$/.test(line)
+      ) {
+        return `${line}  `
+      }
+
+      return line
+    })
+    .join("\n")
+}
+
+function removeStreamlitHardBreakMarkers(markdown: string): string {
+  const lines = markdown.split("\n")
+  let fence: string | null = null
+
+  return lines
+    .map(line => {
+      const fenceMatch = line.match(MARKDOWN_FENCE_REGEXP)
+      if (fenceMatch) {
+        const marker = fenceMatch[1][0]
+        if (fence === null) {
+          fence = marker
+        } else if (fence === marker) {
+          fence = null
+        }
+        return line
+      }
+
+      if (fence !== null) {
+        return line
+      }
+
+      return line.replace(/ {2,}$/, "").replace(/\\$/, "")
+    })
+    .join("\n")
+}
+
 export interface StreamlitLexicalState extends FrontendState {
   value: string
 }
@@ -94,6 +177,9 @@ function StreamlitLexical({
   // Track the current markdown to detect external changes
   const currentMarkdownRef = useRef<string>(value ?? "")
 
+  // Flag to distinguish local typing updates from external prop changes
+  const isLocalUpdate = useRef<boolean>(false)
+
   // Debounce timer ref
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -111,7 +197,7 @@ function StreamlitLexical({
     },
     editorState: () => {
       $convertFromMarkdownString(
-        initialValueRef.current,
+        removeStreamlitHardBreakMarkers(initialValueRef.current),
         [TABLE_TRANSFORMER, ...SAFE_TRANSFORMERS],
         undefined,
         true
@@ -142,11 +228,15 @@ function StreamlitLexical({
         return
       }
 
+      isLocalUpdate.current = true
+
       editorState.read(() => {
-        const markdown = $convertToMarkdownString(
-          [TABLE_TRANSFORMER, ...SAFE_TRANSFORMERS],
-          undefined,
-          true,
+        const markdown = preserveStreamlitLineBreaks(
+          $convertToMarkdownString(
+            [TABLE_TRANSFORMER, ...SAFE_TRANSFORMERS],
+            undefined,
+            true,
+          ),
         )
 
         if (debounceTimerRef.current) {
@@ -199,6 +289,7 @@ function StreamlitLexical({
           currentMarkdownRef={currentMarkdownRef}
           debounceTimerRef={debounceTimerRef}
           setStateValue={setStateValue}
+          isLocalUpdate={isLocalUpdate}
         />
         <div
           className={`editor-container ${
@@ -236,11 +327,13 @@ function EditorContentUpdater({
   currentMarkdownRef,
   debounceTimerRef,
   setStateValue,
+  isLocalUpdate,
 }: {
   content: string | null
   currentMarkdownRef: React.MutableRefObject<string>
   debounceTimerRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>
   setStateValue: StreamlitLexicalProps["setStateValue"]
+  isLocalUpdate: React.MutableRefObject<boolean>
 }) {
   const [editor] = useLexicalComposerContext()
   const prevContentRef = useRef<string | null>(content)
@@ -249,22 +342,22 @@ function EditorContentUpdater({
     // None means "do not send an external update". An empty string is an
     // explicit request to clear the editor.
     if (content === null) {
+      isLocalUpdate.current = false
+      return
+    }
+
+    if (isLocalUpdate.current) {
+      isLocalUpdate.current = false
+      prevContentRef.current = content
       return
     }
 
     // Skip if content hasn't actually changed
-    if (content === prevContentRef.current) {
+    if (content === prevContentRef.current || content === currentMarkdownRef.current) {
       return
     }
 
     prevContentRef.current = content
-
-    // A component state update returns to Python and then comes back through
-    // data.value. It is already present in Lexical, so importing it again
-    // would reset selection, focus, and history.
-    if (content === currentMarkdownRef.current) {
-      return
-    }
 
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current)
@@ -278,7 +371,7 @@ function EditorContentUpdater({
 
         if (content) {
           $convertFromMarkdownString(
-            content,
+            removeStreamlitHardBreakMarkers(content),
             [TABLE_TRANSFORMER, ...SAFE_TRANSFORMERS],
             undefined,
             true
@@ -302,6 +395,7 @@ function EditorContentUpdater({
     currentMarkdownRef,
     debounceTimerRef,
     setStateValue,
+    isLocalUpdate,
   ])
 
   return null

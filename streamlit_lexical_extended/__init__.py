@@ -168,15 +168,14 @@ def streamlit_lexical_extended(
     on_change: OnChange = None,
     width: Width = "stretch",
     toolbar: Toolbar = None,
-) -> ComponentResult:
-    """Mount the editor and return its native Components v2 state object.
+) -> str:
+    """Mount the editor and return its Markdown string value natively.
 
-    The Markdown value is available as ``result.value``. When ``key`` is
-    provided, Streamlit stores the result object in ``st.session_state[key]``.
-    Pass ``value=None`` to leave the current editor content untouched, or pass
-    ``value=""`` to explicitly clear it. ``toolbar=None`` displays every
-    control, a sequence displays only those controls, and an empty sequence
-    hides the toolbar.
+    When ``key`` is provided, Streamlit stores the editor value in
+    ``st.session_state[key]``. Pass ``value=None`` to leave the current editor
+    content untouched, or pass ``value=""`` to explicitly clear it.
+    ``toolbar=None`` displays every control, a sequence displays only those
+    controls, and an empty sequence hides the toolbar.
     """
 
     _validate_arguments(
@@ -191,11 +190,22 @@ def streamlit_lexical_extended(
         toolbar=toolbar,
     )
 
+    internal_value = value
+    if key is not None:
+        state_key = f"_lexical_internal_val_{key}"
+        if state_key in st.session_state:
+            if value == st.session_state[state_key]:
+                internal_value = None
+            else:
+                st.session_state[state_key] = value
+        else:
+            st.session_state[state_key] = value
+
     initial_value = value if value is not None else ""
     mount_arguments = {
         "key": key,
         "data": {
-            "value": value,
+            "value": internal_value,
             "placeholder": placeholder,
             "minHeight": min_height,
             "debounce": debounce,
@@ -209,7 +219,23 @@ def streamlit_lexical_extended(
     }
     if _ISOLATE_STYLES_AT_MOUNT:
         mount_arguments["isolate_styles"] = True
-    return _component(**mount_arguments)
+
+    raw_result = _component(**mount_arguments)
+
+    if hasattr(raw_result, "value"):
+        result_str = raw_result.value
+    elif isinstance(raw_result, dict):
+        result_str = raw_result.get("value", "")
+    else:
+        result_str = raw_result or ""
+
+    if isinstance(result_str, dict):
+        result_str = result_str.get("value", "")
+
+    if key is not None and result_str is not None:
+        st.session_state[f"_lexical_internal_val_{key}"] = result_str
+
+    return result_str if isinstance(result_str, str) else (value or "")
 
 
 __all__ = ["streamlit_lexical_extended"]

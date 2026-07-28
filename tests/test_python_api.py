@@ -29,7 +29,8 @@ def test_api_returns_result_and_mounts_v2_contract(component_spy):
         width=640,
     )
 
-    assert result.value == "# Native"
+    assert result == "# Native"
+    assert isinstance(result, str)
     assert component_spy == [
         {
             "key": "native",
@@ -47,6 +48,23 @@ def test_api_returns_result_and_mounts_v2_contract(component_spy):
             "on_value_change": component_spy[0]["on_value_change"],
         }
     ]
+
+
+def test_internal_value_deduplication_on_rerun(component_spy):
+    # First render: initial value passed to frontend
+    res1 = lexical.streamlit_lexical_extended(value="Hello", key="ed1")
+    assert res1 == "Hello"
+    assert component_spy[0]["data"]["value"] == "Hello"
+
+    # Second render with same value (e.g. natural Streamlit rerun): internal_value passed to frontend is None
+    res2 = lexical.streamlit_lexical_extended(value="Hello", key="ed1")
+    assert res2 == "Hello"
+    assert component_spy[1]["data"]["value"] is None
+
+    # Third render with programmatic change: new value passed to frontend
+    res3 = lexical.streamlit_lexical_extended(value="New Hello", key="ed1")
+    assert res3 == "New Hello"
+    assert component_spy[2]["data"]["value"] == "New Hello"
 
 
 def test_public_api_contains_only_native_component_function():
@@ -100,14 +118,18 @@ def test_callback_reads_native_result_from_session_state(monkeypatch):
     monkeypatch.setattr(lexical, "_component", component)
     monkeypatch.setattr(lexical.st, "session_state", session_state)
 
+    def on_change():
+        raw = session_state.get("editor")
+        val = raw.value if hasattr(raw, "value") else raw
+        observed.append(val)
+
     result = lexical.streamlit_lexical_extended(
         value="Initial",
         key="editor",
-        on_change=lambda: observed.append(session_state["editor"].value),
+        on_change=on_change,
     )
 
-    assert result.value == "Changed in browser"
-    assert session_state["editor"].value == "Changed in browser"
+    assert result == "Changed in browser"
     assert observed == ["Changed in browser"]
 
 

@@ -22005,7 +22005,11 @@ function Fv(e, t = uv, n, r = !1, i = !1) {
 	let a = r ? e : dv(e, i), o = n || Yo();
 	o.clear(), wv(a, o, t, r), N() !== null && o.selectStart();
 }
-function Iv(e = uv, t, n = !1) {
+function Iv(e, t = uv, n = !1, r = !1) {
+	let i = n ? e : dv(e, r), a = new to();
+	return wv(i, a, t, n), a.getChildren();
+}
+function Lv(e = uv, t, n = !1) {
 	return function(e, t = !1) {
 		let n = g_(e), r = [...n.multilineElement, ...n.element], i = !t, a = n.textFormat.filter((e) => e.format.length === 1).sort((e, t) => Number(e.format.includes("code")) - Number(t.format.includes("code")));
 		return (e) => {
@@ -22021,7 +22025,7 @@ ${l}` : l);
 }
 //#endregion
 //#region node_modules/@lexical/react/dist/LexicalMarkdownShortcutPlugin.prod.mjs
-var Lv = [{
+var Rv = [{
 	dependencies: [Nd],
 	export: (e) => Id(e) ? "***" : null,
 	regExp: /^(---|\*\*\*|___)\s?$/,
@@ -22032,23 +22036,23 @@ var Lv = [{
 	triggerOnEnter: !0,
 	type: "element"
 }, ...uv];
-function Rv({ transformers: e = Lv }) {
+function zv({ transformers: e = Rv }) {
 	let [t] = b();
 	return (0, _.useEffect)(() => Pv(t, e), [t, e]), null;
 }
 //#endregion
 //#region node_modules/@lexical/react/dist/useLexicalNodeSelection.prod.mjs
-function zv(e, t) {
+function Bv(e, t) {
 	return e.read("latest", () => {
 		let e = R(t);
 		return e !== null && e.isSelected();
 	});
 }
-function Bv(e) {
-	let [t] = b(), [n, r] = (0, _.useState)(() => zv(t, e));
+function Vv(e) {
+	let [t] = b(), [n, r] = (0, _.useState)(() => Bv(t, e));
 	return (0, _.useEffect)(() => {
 		let n = !0, i = t.registerUpdateListener(() => {
-			n && r(zv(t, e));
+			n && r(Bv(t, e));
 		});
 		return () => {
 			n = !1, i();
@@ -22071,8 +22075,8 @@ function Bv(e) {
 }
 //#endregion
 //#region node_modules/@lexical/react/dist/LexicalHorizontalRuleNode.prod.mjs
-function Vv({ nodeKey: e }) {
-	let [t] = b(), [n, r, i] = Bv(e);
+function Hv({ nodeKey: e }) {
+	let [t] = b(), [n, r, i] = Vv(e);
 	return (0, _.useEffect)(() => Xl(t.registerCommand(pn, (a) => {
 		let o = t.getElementByKey(e);
 		return Zs(a) === o && (a.shiftKey || i(), r(!n), !0);
@@ -22091,7 +22095,7 @@ function Vv({ nodeKey: e }) {
 		e
 	]), null;
 }
-var Hv = class e extends Nd {
+var Uv = class e extends Nd {
 	static getType() {
 		return "horizontalrule";
 	}
@@ -22099,23 +22103,23 @@ var Hv = class e extends Nd {
 		return new e(t.__key);
 	}
 	static importJSON(e) {
-		return Wv().updateFromJSON(e);
+		return Gv().updateFromJSON(e);
 	}
 	static importDOM() {
 		return { hr: () => ({
-			conversion: Uv,
+			conversion: Wv,
 			priority: 0
 		}) };
 	}
 	decorate() {
-		return (0, J.jsx)(Vv, { nodeKey: this.__key });
+		return (0, J.jsx)(Hv, { nodeKey: this.__key });
 	}
 };
-function Uv() {
-	return { node: Wv() };
-}
 function Wv() {
-	return js(new Hv());
+	return { node: Gv() };
+}
+function Gv() {
+	return js(new Uv());
 }
 (/* @__PURE__ */ o(((e, t) => {
 	var n = function(e) {
@@ -23902,7 +23906,7 @@ function Wv() {
 } }), delete Prism.languages.go["class-name"], globalThis.Prism || window.Prism;
 //#endregion
 //#region node_modules/@lexical/react/dist/LexicalListPlugin.prod.mjs
-function Gv({ hasStrictIndent: e = !1, shouldPreserveNumbering: t = !1 }) {
+function Kv({ hasStrictIndent: e = !1, shouldPreserveNumbering: t = !1 }) {
 	let [n] = b();
 	return (0, _.useEffect)(() => {
 		if (!n.hasNodes([Cg, vg])) throw Error("ListPlugin: ListNode and/or ListItemNode not registered on editor");
@@ -23916,7 +23920,7 @@ function Gv({ hasStrictIndent: e = !1, shouldPreserveNumbering: t = !1 }) {
 }
 //#endregion
 //#region node_modules/@lexical/react/dist/LexicalTabIndentationPlugin.prod.mjs
-function Kv({ maxIndent: e, $canIndent: t }) {
+function qv({ maxIndent: e, $canIndent: t }) {
 	let [n] = b();
 	return (0, _.useEffect)(() => Rd(n, e, t), [
 		n,
@@ -23926,7 +23930,7 @@ function Kv({ maxIndent: e, $canIndent: t }) {
 }
 //#endregion
 //#region node_modules/@lexical/react/dist/LexicalTablePlugin.prod.mjs
-function qv({ hasCellMerge: e = !0, hasCellBackgroundColor: t = !0, hasTabHandler: n = !0, hasHorizontalScroll: r = !1, hasNestedTables: i = !1 }) {
+function Jv({ hasCellMerge: e = !0, hasCellBackgroundColor: t = !0, hasTabHandler: n = !0, hasHorizontalScroll: r = !1, hasNestedTables: i = !1 }) {
 	let [a] = b();
 	(0, _.useEffect)(() => {
 		Hh(a) !== r && (Uh(a, r), a.update(Oa));
@@ -23949,10 +23953,10 @@ function qv({ hasCellMerge: e = !0, hasCellBackgroundColor: t = !0, hasTabHandle
 }
 //#endregion
 //#region src/plugins/TableActionMenuPlugin.tsx
-function Jv(e) {
+function Yv(e) {
 	return e.ownerDocument.defaultView?.getComputedStyle(e).direction === "rtl";
 }
-function Yv(e) {
+function Xv(e) {
 	let [t, n] = (0, _.useState)(null);
 	return (0, _.useEffect)(() => {
 		let t = e.getRootElement();
@@ -23961,8 +23965,8 @@ function Yv(e) {
 		});
 	}, [e]), t;
 }
-function Xv() {
-	let [e] = b(), t = Yv(e), [n, r] = (0, _.useState)(null), [i, a] = (0, _.useState)(null), o = (0, _.useRef)(null), s = (0, _.useRef)(null), c = (0, _.useCallback)(() => {
+function Zv() {
+	let [e] = b(), t = Xv(e), [n, r] = (0, _.useState)(null), [i, a] = (0, _.useState)(null), o = (0, _.useRef)(null), s = (0, _.useRef)(null), c = (0, _.useCallback)(() => {
 		r(null), a(null);
 	}, []);
 	(0, _.useEffect)(() => e.registerUpdateListener(({ editorState: t }) => {
@@ -24028,7 +24032,7 @@ function Xv() {
 		}), c();
 	}, [e, c]), u = (0, _.useCallback)((e, n) => {
 		if (!t) return;
-		let i = n.getBoundingClientRect(), a = t.getBoundingClientRect(), o = i.left - a.left, s = i.top - a.top, c = i.right - a.left, l = Jv(t), u = l ? o - 200 - 5 : c + 5, d = s;
+		let i = n.getBoundingClientRect(), a = t.getBoundingClientRect(), o = i.left - a.left, s = i.top - a.top, c = i.right - a.left, l = Yv(t), u = l ? o - 200 - 5 : c + 5, d = s;
 		(l ? u < 10 : u + 200 > a.width - 10) && (u = l ? c + 5 : o - 200 - 5), (u < 10 || u + 200 > a.width - 10) && (u = Math.max(10, (a.width - 200) / 2)), d + 220 > a.height - 10 && (d = a.height - 220 - 10), d < 10 && (d = 10), r({
 			x: u,
 			y: d,
@@ -24036,7 +24040,7 @@ function Xv() {
 		});
 	}, [t]);
 	return /* @__PURE__ */ (0, J.jsxs)(J.Fragment, { children: [i && !n && t && (() => {
-		let e = i.cellElement.getBoundingClientRect(), n = t.getBoundingClientRect(), r = e.top - n.top, a = e.left - n.left, o = e.right - n.left, c = r + i.cellElement.offsetHeight / 2 - 8, l = Jv(t) ? a + 4 : o - 20;
+		let e = i.cellElement.getBoundingClientRect(), n = t.getBoundingClientRect(), r = e.top - n.top, a = e.left - n.left, o = e.right - n.left, c = r + i.cellElement.offsetHeight / 2 - 8, l = Yv(t) ? a + 4 : o - 20;
 		return l + 16 > n.width - 5 && (l = n.width - 16 - 5), l < 5 && (l = 5), c + 16 > n.height - 5 && (c = n.height - 16 - 5), c < 5 && (c = 5), /* @__PURE__ */ (0, J.jsx)("button", {
 			ref: s,
 			className: "table-cell-chevron",
@@ -24094,11 +24098,11 @@ function Xv() {
 					children: [
 						/* @__PURE__ */ (0, J.jsx)("button", {
 							onClick: () => l(() => Am(!1)),
-							children: Jv(t) ? "+Right" : "+Left"
+							children: Yv(t) ? "+Right" : "+Left"
 						}),
 						/* @__PURE__ */ (0, J.jsx)("button", {
 							onClick: () => l(() => Am(!0)),
-							children: Jv(t) ? "+Left" : "+Right"
+							children: Yv(t) ? "+Left" : "+Right"
 						}),
 						/* @__PURE__ */ (0, J.jsx)("button", {
 							onClick: () => l(() => Nm()),
@@ -24135,50 +24139,48 @@ function Xv() {
 }
 //#endregion
 //#region src/markdown/tableTransformer.ts
-var Zv = /^\s*\|(.+?)\|\s*$/, Qv = /^\s*\|\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|\s*$/;
-function $v(e) {
-	return ey(e).map((e) => {
+var Qv = /^\s*\|(.+?)\|\s*$/, $v = /^\s*\|\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|\s*$/;
+function ey(e) {
+	return ty(e).map((e) => {
 		let t = e.trim();
 		return t.startsWith(":") && t.endsWith(":") ? "center" : t.endsWith(":") ? "right" : t.startsWith(":") ? "left" : null;
 	});
 }
-function ey(e) {
+function ty(e) {
 	let t = e;
 	return t = t.replace(/\\\|/g, ""), t = t.trim(), t.startsWith("|") && (t = t.slice(1)), t.endsWith("|") && (t = t.slice(0, -1)), t.split("|").map((e) => e.replace(/* @__PURE__ */ RegExp("", "g"), "|").trim());
 }
-function ty(e) {
+function ny(e) {
 	return e.replace(/\|/g, "\\|");
 }
-function ny(e) {
+var ry = /\t/g;
+function iy(e) {
 	return e.getAllTextNodes().map((e) => {
 		let t = e.getTextContent();
 		return e.hasFormat("code") && (t = `\`${t}\``), e.hasFormat("bold") && (t = `**${t}**`), e.hasFormat("italic") && (t = `*${t}*`), e.hasFormat("strikethrough") && (t = `~~${t}~~`), t;
 	}).join("").trim();
 }
-function ry(e, t, n) {
-	if (e.clear(), !t.trim()) {
-		let t = I();
-		if (n) {
-			let e = n === "left" ? "left" : n === "center" ? "center" : n === "right" ? "right" : "";
-			e && t.setFormat(e);
+function ay(e, t) {
+	if (!t) return;
+	let n = t === "left" ? "left" : t === "center" ? "center" : t === "right" ? "right" : "";
+	n && e.setFormat(n);
+}
+function oy(e, t, n) {
+	e.clear();
+	let r = uv.filter((e) => e.type === "text-format" || e.type === "text-match"), i = t.split(ry);
+	for (let t of i) {
+		let i = t.trim(), a = [];
+		if (i) try {
+			a = Iv(i, r, !0).filter((e) => e instanceof Ga);
+		} catch {
+			a = [];
 		}
-		e.append(t);
-		return;
-	}
-	let r = I();
-	if (n) {
-		let e = n === "left" ? "left" : n === "center" ? "center" : n === "right" ? "right" : "";
-		e && r.setFormat(e);
-	}
-	e.append(r);
-	try {
-		let e = uv.filter((e) => e.type === "text-format" || e.type === "text-match");
-		Fv(t.trim(), e, r, !0);
-	} catch {
-		r.append(mi(t.trim()));
+		a.length || (a = [I()], i && a[0].append(mi(i))), a.forEach((t) => {
+			ay(t, n), e.append(t);
+		});
 	}
 }
-var iy = {
+var sy = {
 	dependencies: [
 		Wh,
 		xm,
@@ -24200,7 +24202,7 @@ var iy = {
 						let n = t(e);
 						n.trim() && a.push(n.trim());
 					}
-				}), r = a.join(" "), r = r.replace(/\r\n/g, "\n"), r = r.replace(/\r/g, "\n"), r = r.replace(/\n+/g, " "), r = r.replace(/\s+/g, " "), r = ty(r), n.push(r.trim());
+				}), r = a.join("	"), r = r.replace(/\r\n/g, "\n"), r = r.replace(/\r/g, "\n"), r = r.replace(/\n+/g, "	"), r = ny(r), n.push(r.trim());
 			}), i = Math.max(i, n.length), r.push(n);
 		}), r.forEach((e) => {
 			for (; e.length < i;) e.push("");
@@ -24234,7 +24236,7 @@ var iy = {
 	replace: () => !1,
 	type: "element"
 };
-function ay() {
+function cy() {
 	let e = Yo(), t = 0;
 	for (; t < e.getChildrenSize();) {
 		let n = e.getChildren(), r = n[t];
@@ -24242,13 +24244,13 @@ function ay() {
 			t++;
 			continue;
 		}
-		let i = ny(r), a = n[t + 1];
-		if (!Zv.test(i) || !(a instanceof Ga) || a.getType() !== "paragraph") {
+		let i = iy(r), a = n[t + 1];
+		if (!Qv.test(i) || !(a instanceof Ga) || a.getType() !== "paragraph") {
 			t++;
 			continue;
 		}
-		let o = ny(a);
-		if (!Qv.test(o)) {
+		let o = iy(a);
+		if (!$v.test(o)) {
 			t++;
 			continue;
 		}
@@ -24256,11 +24258,11 @@ function ay() {
 		for (; l < n.length;) {
 			let e = n[l];
 			if (!(e instanceof Ga) || e.getType() !== "paragraph") break;
-			let t = ny(e);
-			if (!Zv.test(t)) break;
+			let t = iy(e);
+			if (!Qv.test(t)) break;
 			s.push(e), c.push(t), l++;
 		}
-		let u = ey(i), d = $v(o), f = c.map((e) => ey(e)), p = u.length;
+		let u = ty(i), d = ey(o), f = c.map((e) => ty(e)), p = u.length;
 		f.forEach((e) => {
 			p = Math.max(p, e.length);
 		}), p = Math.max(1, p);
@@ -24274,7 +24276,7 @@ function ay() {
 				let n = e[t];
 				if (n instanceof gm) {
 					let e = d[t] || null;
-					ry(n, u[t] ?? "", e), n.setHeaderStyles(hm.ROW);
+					oy(n, u[t] ?? "", e), n.setHeaderStyles(hm.ROW);
 				}
 			}
 		}
@@ -24284,7 +24286,7 @@ function ay() {
 				let t = r[e];
 				if (t instanceof gm) {
 					let r = d[e] || null;
-					ry(t, n[e] ?? "", r);
+					oy(t, n[e] ?? "", r);
 				}
 			}
 		}), r.insertBefore(m), s.forEach((e) => e.remove()), t = e.getChildren().indexOf(m) + 1;
@@ -24292,19 +24294,43 @@ function ay() {
 }
 //#endregion
 //#region src/StreamlitLexical.tsx
-var oy = "streamlit-lexical-external-update", sy = uv.filter((e) => !(e.type === "text-match" && e.regExp.toString().includes("\\[")));
-function cy({ value: e, placeholder: t, debounce: n, minHeight: r, fixedHeight: i, toolbar: a, direction: o, instanceKey: s, setStateValue: c }) {
-	let l = (0, _.useRef)(e ?? ""), u = (0, _.useRef)(e ?? ""), d = (0, _.useRef)(null), f = (0, _.useMemo)(() => `StreamlitLexicalEditor-${s}`, [s]), p = (0, _.useMemo)(() => ({
-		namespace: f,
+var ly = "streamlit-lexical-external-update", uy = uv.filter((e) => !(e.type === "text-match" && e.regExp.toString().includes("\\["))), dy = /^\s{0,3}(`{3,}|~{3,})/, fy = /^\s{0,3}(?:#{1,6}(?:\s|$)|>|(?:[-+*]|\d+[.)])\s|\||(?:-{3,}|_{3,}|\*{3,})\s*$)/;
+function py(e) {
+	let t = e.split("\n"), n = null;
+	return t.map((e, r) => {
+		let i = e.match(dy);
+		if (i) {
+			let t = i[1][0];
+			return n === null ? n = t : n === t && (n = null), e;
+		}
+		if (n !== null) return e;
+		let a = t[r + 1], o = (e) => !e.trim() || e.startsWith("    ") ? !1 : !fy.test(e);
+		return a && o(e) && o(a) && !e.endsWith("\\") && !/ {2,}$/.test(e) ? `${e}  ` : e;
+	}).join("\n");
+}
+function my(e) {
+	let t = e.split("\n"), n = null;
+	return t.map((e) => {
+		let t = e.match(dy);
+		if (t) {
+			let r = t[1][0];
+			return n === null ? n = r : n === r && (n = null), e;
+		}
+		return n === null ? e.replace(/ {2,}$/, "").replace(/\\$/, "") : e;
+	}).join("\n");
+}
+function hy({ value: e, placeholder: t, debounce: n, minHeight: r, fixedHeight: i, toolbar: a, direction: o, instanceKey: s, setStateValue: c }) {
+	let l = (0, _.useRef)(e ?? ""), u = (0, _.useRef)(e ?? ""), d = (0, _.useRef)(!1), f = (0, _.useRef)(null), p = (0, _.useMemo)(() => `StreamlitLexicalEditor-${s}`, [s]), m = (0, _.useMemo)(() => ({
+		namespace: p,
 		theme: Rg,
 		onError: (e) => {
 			console.error("Lexical error:", e);
 		},
 		editorState: () => {
-			Fv(l.current, [iy, ...sy], void 0, !0), ay();
+			Fv(my(l.current), [sy, ...uy], void 0, !0), cy();
 		},
 		nodes: [
-			Hv,
+			Uv,
 			Ep,
 			Cp,
 			Gg,
@@ -24314,83 +24340,93 @@ function cy({ value: e, placeholder: t, debounce: n, minHeight: r, fixedHeight: 
 			xm,
 			gm
 		]
-	}), [f]), m = (0, _.useCallback)((e, t, r) => {
-		r.has(oy) || e.read(() => {
-			let e = Iv([iy, ...sy], void 0, !0);
-			d.current && clearTimeout(d.current), d.current = setTimeout(() => {
+	}), [p]), h = (0, _.useCallback)((e, t, r) => {
+		r.has(ly) || (d.current = !0, e.read(() => {
+			let e = py(Lv([sy, ...uy], void 0, !0));
+			f.current && clearTimeout(f.current), f.current = setTimeout(() => {
 				let t = e ?? "";
 				u.current = t, c("value", t);
 			}, n);
-		});
+		}));
 	}, [n, c]);
 	(0, _.useEffect)(() => () => {
-		d.current && clearTimeout(d.current);
+		f.current && clearTimeout(f.current);
 	}, []);
-	let h = i !== null, g = h ? {
+	let g = i !== null, v = g ? {
 		height: "100%",
 		minHeight: 0,
 		overflowY: "auto"
 	} : {
 		minHeight: `${r}px`,
 		overflowY: "visible"
-	}, v = a ?? Fg, y = v.length > 0;
+	}, y = a ?? Fg, b = y.length > 0;
 	return /* @__PURE__ */ (0, J.jsx)("div", {
 		dir: o,
-		className: `streamlit-lexical-editor ${h ? "is-fixed-height" : "is-auto-height"}`,
-		style: h ? { height: `${i}px` } : void 0,
+		className: `streamlit-lexical-editor ${g ? "is-fixed-height" : "is-auto-height"}`,
+		style: g ? { height: `${i}px` } : void 0,
 		children: /* @__PURE__ */ (0, J.jsxs)(eu, {
-			initialConfig: p,
-			children: [/* @__PURE__ */ (0, J.jsx)(ly, {
+			initialConfig: m,
+			children: [/* @__PURE__ */ (0, J.jsx)(gy, {
 				content: e,
 				currentMarkdownRef: u,
-				debounceTimerRef: d,
-				setStateValue: c
+				debounceTimerRef: f,
+				setStateValue: c,
+				isLocalUpdate: d
 			}), /* @__PURE__ */ (0, J.jsxs)("div", {
-				className: `editor-container ${y ? "with-toolbar" : "without-toolbar"}`,
-				children: [y && /* @__PURE__ */ (0, J.jsx)(Lg, { tools: v }), /* @__PURE__ */ (0, J.jsxs)("div", {
+				className: `editor-container ${b ? "with-toolbar" : "without-toolbar"}`,
+				children: [b && /* @__PURE__ */ (0, J.jsx)(Lg, { tools: y }), /* @__PURE__ */ (0, J.jsxs)("div", {
 					className: "editor-inner",
 					children: [
 						/* @__PURE__ */ (0, J.jsx)(Yp, {
 							contentEditable: /* @__PURE__ */ (0, J.jsx)(tm, {
 								className: "editor-input",
-								style: g
+								style: v
 							}),
-							placeholder: /* @__PURE__ */ (0, J.jsx)(uy, { text: t }),
+							placeholder: /* @__PURE__ */ (0, J.jsx)(_y, { text: t }),
 							ErrorBoundary: pm
 						}),
 						/* @__PURE__ */ (0, J.jsx)(lm, {}),
-						/* @__PURE__ */ (0, J.jsx)(Rv, { transformers: [iy, ...sy] }),
-						/* @__PURE__ */ (0, J.jsx)(Gv, {}),
+						/* @__PURE__ */ (0, J.jsx)(zv, { transformers: [sy, ...uy] }),
 						/* @__PURE__ */ (0, J.jsx)(Kv, {}),
 						/* @__PURE__ */ (0, J.jsx)(qv, {}),
-						/* @__PURE__ */ (0, J.jsx)(Xv, {}),
-						/* @__PURE__ */ (0, J.jsx)(dm, { onChange: m })
+						/* @__PURE__ */ (0, J.jsx)(Jv, {}),
+						/* @__PURE__ */ (0, J.jsx)(Zv, {}),
+						/* @__PURE__ */ (0, J.jsx)(dm, { onChange: h })
 					]
 				})]
 			})]
-		}, f)
+		}, p)
 	});
 }
-function ly({ content: e, currentMarkdownRef: t, debounceTimerRef: n, setStateValue: r }) {
-	let [i] = b(), a = (0, _.useRef)(e);
+function gy({ content: e, currentMarkdownRef: t, debounceTimerRef: n, setStateValue: r, isLocalUpdate: i }) {
+	let [a] = b(), o = (0, _.useRef)(e);
 	return (0, _.useEffect)(() => {
-		e !== null && e !== a.current && (a.current = e, e !== t.current && (n.current &&= (clearTimeout(n.current), null), i.update(() => {
-			Yo().clear(), e && (Fv(e, [iy, ...sy], void 0, !0), ay()), i.dispatchCommand(tr, void 0), t.current = e;
+		if (e === null) {
+			i.current = !1;
+			return;
+		}
+		if (i.current) {
+			i.current = !1, o.current = e;
+			return;
+		}
+		e === o.current || e === t.current || (o.current = e, n.current &&= (clearTimeout(n.current), null), a.update(() => {
+			Yo().clear(), e && (Fv(my(e), [sy, ...uy], void 0, !0), cy()), a.dispatchCommand(tr, void 0), t.current = e;
 		}, {
 			onUpdate: () => {
 				r("value", e);
 			},
-			tag: [oy, Kr]
-		})));
+			tag: [ly, Kr]
+		}));
 	}, [
-		i,
+		a,
 		e,
 		t,
 		n,
-		r
+		r,
+		i
 	]), null;
 }
-function uy({ text: e }) {
+function _y({ text: e }) {
 	return /* @__PURE__ */ (0, J.jsx)("div", {
 		className: "editor-placeholder",
 		children: e
@@ -24398,30 +24434,30 @@ function uy({ text: e }) {
 }
 //#endregion
 //#region src/index.tsx
-var dy = /* @__PURE__ */ new WeakMap();
-function fy(e) {
+var vy = /* @__PURE__ */ new WeakMap();
+function yy(e) {
 	let t = "host" in e ? e.host : e;
 	return t.ownerDocument.defaultView?.getComputedStyle(t).direction === "rtl" ? "rtl" : "ltr";
 }
-var py = ({ data: e, key: t, parentElement: n, setStateValue: r }) => {
+var by = ({ data: e, key: t, parentElement: n, setStateValue: r }) => {
 	let i = n.querySelector(".streamlit-lexical-react-root");
 	if (!i) throw Error("Streamlit Lexical React root element was not found.");
-	let a = dy.get(n);
-	a && a.element !== i && (a.root.unmount(), dy.delete(n), a = void 0), a || (a = {
+	let a = vy.get(n);
+	a && a.element !== i && (a.root.unmount(), vy.delete(n), a = void 0), a || (a = {
 		element: i,
 		generation: 0,
 		root: (0, g.createRoot)(i)
-	}, dy.set(n, a));
+	}, vy.set(n, a));
 	let o = a.generation + 1;
-	return a.generation = o, a.root.render(/* @__PURE__ */ (0, J.jsx)(_.StrictMode, { children: /* @__PURE__ */ (0, J.jsx)(cy, {
+	return a.generation = o, a.root.render(/* @__PURE__ */ (0, J.jsx)(_.StrictMode, { children: /* @__PURE__ */ (0, J.jsx)(hy, {
 		...e,
-		direction: fy(n),
+		direction: yy(n),
 		instanceKey: t,
 		setStateValue: r
 	}) })), () => {
-		let e = dy.get(n);
-		e !== a || e.generation !== o || (e.root.unmount(), dy.delete(n));
+		let e = vy.get(n);
+		e !== a || e.generation !== o || (e.root.unmount(), vy.delete(n));
 	};
 };
 //#endregion
-export { py as default };
+export { by as default };

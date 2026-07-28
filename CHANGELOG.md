@@ -2,14 +2,32 @@
 
 All notable changes to streamlit-lexical-extended will be documented in this file.
 
+## [0.3.6] - 2026-07-28
+
+### Changed
+
+- Production release of native Markdown string (`str`) API and echo rerun elimination for `streamlit-lexical-extended`.
+
+## [0.3.5] - 2026-07-28
+
+### Changed
+
+- Updated `streamlit_lexical_extended()` API to return a native Markdown string (`str`) directly instead of a `ComponentResult` object.
+
+### Fixed
+
+- **Rerun Echo Elimination**: Added automatic internal state tracking in `st.session_state` (`_lexical_internal_val_{key}`) to suppress repeated `value` prop updates on Streamlit reruns.
+- **Cursor & Focus Stabilization**: Added `isLocalUpdate` flag in React frontend (`StreamlitLexical.tsx`) to prevent Lexical node tree clearing (`$convertFromMarkdownString`) and cursor jumps during active typing.
+
 ## [0.3.0] - 2026-07-28
 
 ### Changed
 
 - Migrated from iframe-based Custom Components v1 to package-based Streamlit
   Custom Components v2.
-- Replaced the legacy string-returning API with one native
-  `streamlit_lexical_extended()` API returning a named `ComponentResult`.
+- Native `streamlit_lexical_extended()` API returning a Markdown string (`str`) directly.
+- Added automatic internal state tracking in `st.session_state` to deduplicate `value` props on Streamlit reruns, preventing echo rerun loops.
+- Added `isLocalUpdate` tracking on frontend to eliminate cursor resets and focus loss during active typing.
 - Moved Python packaging to `pyproject.toml` and included the component
   manifest and hashed frontend assets in wheels.
 - Replaced Create React App with a Vite library build.
@@ -44,6 +62,9 @@ All notable changes to streamlit-lexical-extended will be documented in this fil
 - Replaced dynamically highlighted output code blocks in the example with
   stable read-only Markdown fields, avoiding Streamlit's `insertBefore`
   reconciliation error during component reruns.
+- Preserved visible line breaks when Markdown is rendered by Streamlit by
+  emitting hard-break markers for consecutive plain-text lines while leaving
+  lists, tables, quotes, headings, and fenced code blocks unchanged.
 
 ### Removed
 

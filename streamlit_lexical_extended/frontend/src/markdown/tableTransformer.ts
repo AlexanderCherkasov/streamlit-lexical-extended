@@ -9,7 +9,7 @@ import {
 import type { LexicalNode } from 'lexical'
 import { $createParagraphNode, $createTextNode, $getRoot, ElementNode } from 'lexical'
 import {
-  $convertFromMarkdownString,
+  $generateNodesFromMarkdownString,
   TRANSFORMERS,
 } from '@lexical/markdown'
 
@@ -61,6 +61,11 @@ function escapePipes(text: string): string {
   return text.replace(/\|/g, '\\|')
 }
 
+// A physical newline terminates a Markdown table row. Keep cell-level line
+// boundaries as a tab so the value remains one valid table row and can be
+// reconstructed when the Markdown is imported again.
+const TABLE_LINE_BREAK_REGEXP = /\t/g
+
 function paragraphToMarkdown(node: ElementNode): string {
   return node.getAllTextNodes().map(textNode => {
     let text = textNode.getTextContent()
@@ -72,51 +77,53 @@ function paragraphToMarkdown(node: ElementNode): string {
   }).join('').trim()
 }
 
-/**
- * Fills a table cell with markdown content, supporting inline formatting and line breaks
- */
+function applyCellAlignment(paragraph: ElementNode, alignment?: ColumnAlignment) {
+  if (!alignment) return
+
+  const format = alignment === 'left' ? 'left' :
+    alignment === 'center' ? 'center' :
+      alignment === 'right' ? 'right' : ''
+  if (format) {
+    paragraph.setFormat(format)
+  }
+}
+
+/** Fills a table cell, treating tabs as logical line separators. */
 function fillCellFromMarkdown(cell: TableCellNode, content: string, alignment?: ColumnAlignment) {
   cell.clear()
 
-  if (!content.trim()) {
-    // Empty cell - add empty paragraph
-    const paragraph = $createParagraphNode()
-    if (alignment) {
-      // Convert alignment to Lexical format type
-      const format = alignment === 'left' ? 'left' :
-        alignment === 'center' ? 'center' :
-          alignment === 'right' ? 'right' : ''
-      if (format) {
-        paragraph.setFormat(format)
+  const textFormatTransformers = TRANSFORMERS.filter(t =>
+    t.type === 'text-format' || t.type === 'text-match'
+  )
+  const segments = content.split(TABLE_LINE_BREAK_REGEXP)
+
+  for (const segment of segments) {
+    const trimmed = segment.trim()
+    let importedParagraphs: ElementNode[] = []
+
+    if (trimmed) {
+      try {
+        importedParagraphs = $generateNodesFromMarkdownString(
+          trimmed,
+          textFormatTransformers,
+          true,
+        ).filter((node): node is ElementNode => node instanceof ElementNode)
+      } catch {
+        importedParagraphs = []
       }
     }
-    cell.append(paragraph)
-    return
-  }
 
-  // Create a single paragraph for the cell content (no line breaks in table cells)
-  const paragraph = $createParagraphNode()
-  if (alignment) {
-    // Convert alignment to Lexical format type
-    const format = alignment === 'left' ? 'left' :
-      alignment === 'center' ? 'center' :
-        alignment === 'right' ? 'right' : ''
-    if (format) {
-      paragraph.setFormat(format)
+    if (!importedParagraphs.length) {
+      importedParagraphs = [$createParagraphNode()]
+      if (trimmed) {
+        importedParagraphs[0].append($createTextNode(trimmed))
+      }
     }
-  }
-  cell.append(paragraph)
 
-  // Convert markdown formatting within the cell
-  try {
-    // Use only text format transformers to avoid conflicts
-    const textFormatTransformers = TRANSFORMERS.filter(t =>
-      t.type === 'text-format' || t.type === 'text-match'
-    )
-    $convertFromMarkdownString(content.trim(), textFormatTransformers, paragraph, true)
-  } catch (error) {
-    // Fallback to plain text if markdown parsing fails
-    paragraph.append($createTextNode(content.trim()))
+    importedParagraphs.forEach(paragraph => {
+      applyCellAlignment(paragraph, alignment)
+      cell.append(paragraph)
+    })
   }
 }
 
@@ -160,8 +167,9 @@ export const TABLE_TRANSFORMER: ElementTransformer = {
           }
         })
         
-        // Join paragraphs with spaces instead of <br> tags for better Markdown table compatibility
-        cellMarkdown = paragraphTexts.join(' ')
+        // Markdown table cells cannot contain a physical newline. Use a tab
+        // as a compact, reversible logical separator instead.
+        cellMarkdown = paragraphTexts.join('\t')
         
         // Debug: log the cell processing (uncomment for debugging)
         // console.log('Cell paragraphs:', paragraphTexts.length, 'Content:', JSON.stringify(cellMarkdown))
@@ -171,11 +179,9 @@ export const TABLE_TRANSFORMER: ElementTransformer = {
         cellMarkdown = cellMarkdown.replace(/\r\n/g, '\n') // Windows line endings
         cellMarkdown = cellMarkdown.replace(/\r/g, '\n')   // Mac line endings
         
-        // Convert remaining newlines to spaces for table cells (better Markdown compatibility)
-        cellMarkdown = cellMarkdown.replace(/\n+/g, ' ')
-        
-        // Clean up multiple consecutive spaces
-        cellMarkdown = cellMarkdown.replace(/\s+/g, ' ')
+        // Convert line breaks produced by nested Lexical nodes to the same
+        // inline marker used between cell paragraphs.
+        cellMarkdown = cellMarkdown.replace(/\n+/g, '\t')
         
         cellMarkdown = escapePipes(cellMarkdown)
 

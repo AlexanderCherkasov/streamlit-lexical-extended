@@ -35,29 +35,24 @@ with st.sidebar:
 
 
 def sync_source() -> None:
-    """Keep the Python input aligned with the native ComponentResult."""
+    """Keep the Python input aligned with the native editor string."""
 
-    result = st.session_state.get("editor")
-    value = (
-        result.get("value")
-        if isinstance(result, dict)
-        else getattr(result, "value", None)
-    )
+    value = st.session_state.get("editor")
     if isinstance(value, str):
         st.session_state.source_markdown = value
 
 
 st.subheader("Native component API")
 st.caption(
-    "Returns ComponentResult; Markdown is available as result.value and "
-    "session state keeps the same native result object."
+    "Returns str natively; Markdown is directly returned as a string and "
+    "session state stores the same string."
 )
 source_markdown = st.text_area(
     "Input Markdown",
     key="source_markdown",
     height=320,
 )
-result = streamlit_lexical_extended(
+result_text = streamlit_lexical_extended(
     value=source_markdown,
     placeholder="Write Markdown…",
     key="editor",
@@ -66,7 +61,7 @@ result = streamlit_lexical_extended(
     on_change=sync_source,
     toolbar=toolbar,
 )
-st.session_state.output_markdown = result.value
+st.session_state.output_markdown = result_text
 st.text_area(
     "Output Markdown",
     key="output_markdown",

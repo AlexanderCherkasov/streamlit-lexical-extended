@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "streamlit-lexical-extended"
-version = "0.3.0"
+version = "0.3.6"
 description = "A Streamlit Components v2 rich text editor powered by Lexical with Markdown and table support."
 readme = "README.md"
 requires-python = ">=3.10"
