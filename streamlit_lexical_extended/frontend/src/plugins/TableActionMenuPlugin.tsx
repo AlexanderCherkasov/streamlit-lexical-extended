@@ -1,21 +1,28 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react'
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext'
-import { $getNodeByKey, $getSelection, $isRangeSelection } from 'lexical'
 import {
-  $deleteTableColumn__EXPERIMENTAL,
-  $deleteTableRow__EXPERIMENTAL,
-  $insertTableColumn__EXPERIMENTAL,
-  $insertTableRow__EXPERIMENTAL,
+  $getNodeByKey,
+  $getSelection,
+  $isRangeSelection,
+  type LexicalEditor,
+} from 'lexical'
+import {
+  $deleteTableColumnAtSelection,
+  $deleteTableRowAtSelection,
+  $insertTableColumnAtSelection,
+  $insertTableRowAtSelection,
   TableCellNode,
   $getNodeTriplet,
 } from '@lexical/table'
 
-function useRootElement(editor: any) {
+function useRootElement(editor: LexicalEditor) {
   const [root, setRoot] = useState<HTMLElement | null>(null)
   useEffect(() => {
-    const r = editor.getRootElement?.() as HTMLElement | null
+    const r = editor.getRootElement()
     setRoot(r)
-    return editor.registerRootListener?.((nextRoot: HTMLElement | null) => setRoot(nextRoot))
+    return editor.registerRootListener((nextRoot: HTMLElement | null) => {
+      setRoot(nextRoot)
+    })
   }, [editor])
   return root
 }
@@ -92,8 +99,7 @@ export default function TableActionMenuPlugin() {
           const node = $getNodeByKey(key)
           if (node && node instanceof TableCellNode) {
             // Select the cell so mutations apply in the right place
-            // @ts-ignore - select may exist on node
-            ;(node as any).select?.()
+            node.select()
           }
         })
       }
@@ -130,22 +136,23 @@ export default function TableActionMenuPlugin() {
   }, [editor, root])
 
   useEffect(() => {
-    if (!menu) return
+    if (!menu || !root) return
+    const ownerDocument = root.ownerDocument
     const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (menuRef.current && !e.composedPath().includes(menuRef.current)) {
         closeMenu()
       }
     }
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') closeMenu()
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('keydown', handleEsc)
+    ownerDocument.addEventListener('mousedown', handleClickOutside)
+    ownerDocument.addEventListener('keydown', handleEsc)
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('keydown', handleEsc)
+      ownerDocument.removeEventListener('mousedown', handleClickOutside)
+      ownerDocument.removeEventListener('keydown', handleEsc)
     }
-  }, [menu, closeMenu])
+  }, [menu, root, closeMenu])
 
   const run = useCallback((fn: () => void) => {
     editor.update(() => {
@@ -255,18 +262,18 @@ export default function TableActionMenuPlugin() {
           <div className="menu-section">
             <span className="section-label">Row</span>
             <div className="button-row">
-              <button onClick={() => run(() => $insertTableRow__EXPERIMENTAL(false))}>+Above</button>
-              <button onClick={() => run(() => $insertTableRow__EXPERIMENTAL(true))}>+Below</button>
-              <button onClick={() => run(() => $deleteTableRow__EXPERIMENTAL())}>Delete</button>
+              <button onClick={() => run(() => $insertTableRowAtSelection(false))}>+Above</button>
+              <button onClick={() => run(() => $insertTableRowAtSelection(true))}>+Below</button>
+              <button onClick={() => run(() => $deleteTableRowAtSelection())}>Delete</button>
             </div>
           </div>
           <div className="divider" />
           <div className="menu-section">
             <span className="section-label">Column</span>
             <div className="button-row">
-              <button onClick={() => run(() => $insertTableColumn__EXPERIMENTAL(false))}>+Left</button>
-              <button onClick={() => run(() => $insertTableColumn__EXPERIMENTAL(true))}>+Right</button>
-              <button onClick={() => run(() => $deleteTableColumn__EXPERIMENTAL())}>Delete</button>
+              <button onClick={() => run(() => $insertTableColumnAtSelection(false))}>+Left</button>
+              <button onClick={() => run(() => $insertTableColumnAtSelection(true))}>+Right</button>
+              <button onClick={() => run(() => $deleteTableColumnAtSelection())}>Delete</button>
             </div>
           </div>
           <div className="divider" />
@@ -282,9 +289,9 @@ export default function TableActionMenuPlugin() {
                     const node = $getNodeByKey(key)
                     if (!node) return
                     try {
-                      const [, , tableNode] = $getNodeTriplet(node as any)
+                      const [, , tableNode] = $getNodeTriplet(node)
                       tableNode.remove()
-                    } catch (e) {
+                    } catch {
                       // ignore
                     }
                   })

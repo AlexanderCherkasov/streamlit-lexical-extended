@@ -8,7 +8,10 @@ import {
 } from '@lexical/table'
 import type { LexicalNode } from 'lexical'
 import { $createParagraphNode, $createTextNode, $getRoot, ElementNode } from 'lexical'
-import { $convertFromMarkdownString, TRANSFORMERS } from '@lexical/markdown'
+import {
+  $convertFromMarkdownString,
+  TRANSFORMERS,
+} from '@lexical/markdown'
 
 // Regex patterns for markdown table detection
 const TABLE_ROW_REGEXP = /^\s*\|(.+?)\|\s*$/
@@ -58,6 +61,17 @@ function escapePipes(text: string): string {
   return text.replace(/\|/g, '\\|')
 }
 
+function paragraphToMarkdown(node: ElementNode): string {
+  return node.getAllTextNodes().map(textNode => {
+    let text = textNode.getTextContent()
+    if (textNode.hasFormat('code')) text = `\`${text}\``
+    if (textNode.hasFormat('bold')) text = `**${text}**`
+    if (textNode.hasFormat('italic')) text = `*${text}*`
+    if (textNode.hasFormat('strikethrough')) text = `~~${text}~~`
+    return text
+  }).join('').trim()
+}
+
 /**
  * Fills a table cell with markdown content, supporting inline formatting and line breaks
  */
@@ -73,7 +87,7 @@ function fillCellFromMarkdown(cell: TableCellNode, content: string, alignment?: 
         alignment === 'center' ? 'center' :
           alignment === 'right' ? 'right' : ''
       if (format) {
-        paragraph.setFormat(format as any)
+        paragraph.setFormat(format)
       }
     }
     cell.append(paragraph)
@@ -88,7 +102,7 @@ function fillCellFromMarkdown(cell: TableCellNode, content: string, alignment?: 
       alignment === 'center' ? 'center' :
         alignment === 'right' ? 'right' : ''
     if (format) {
-      paragraph.setFormat(format as any)
+      paragraph.setFormat(format)
     }
   }
   cell.append(paragraph)
@@ -188,9 +202,12 @@ export const TABLE_TRANSFORMER: ElementTransformer = {
       firstRow.getChildren().forEach((cellNode, idx) => {
         if (cellNode instanceof TableCellNode && idx < maxCols) {
           const firstParagraph = cellNode.getFirstChild()
-          if (firstParagraph && firstParagraph.getType() === 'paragraph') {
-            const format = (firstParagraph as any).getFormat()
-            columnAlignments[idx] = format || null
+          if (firstParagraph instanceof ElementNode && firstParagraph.getType() === 'paragraph') {
+            const format = firstParagraph.getFormat()
+            columnAlignments[idx] =
+              format === 1 || format === 2 || format === 3
+                ? format
+                : null
           } else {
             columnAlignments[idx] = null
           }
@@ -255,39 +272,57 @@ export const TABLE_TRANSFORMER: ElementTransformer = {
  */
 export function $convertMarkdownTablesToTableNodes(): void {
   const root = $getRoot()
-  const children = root.getChildren()
   let i = 0
 
-  while (i < children.length) {
+  while (i < root.getChildrenSize()) {
+    const children = root.getChildren()
     const node = children[i]
 
-    // Look for paragraph nodes that might contain table markdown
     if (!(node instanceof ElementNode) || node.getType() !== 'paragraph') {
       i++
       continue
     }
 
-    const text = node.getTextContent()
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0)
-
-    // Check if this looks like a table (first line is table row, second is divider)
-    if (lines.length < 2) {
+    // Lexical 0.48 imports each Markdown table line as an independent
+    // paragraph. Export the paragraph back through the stable Markdown
+    // transformers so inline formatting inside cells is retained.
+    const firstLine = paragraphToMarkdown(node)
+    const dividerNode = children[i + 1]
+    if (
+      !TABLE_ROW_REGEXP.test(firstLine) ||
+      !(dividerNode instanceof ElementNode) ||
+      dividerNode.getType() !== 'paragraph'
+    ) {
       i++
       continue
     }
 
-    const firstLine = lines[0]
-    const secondLine = lines[1]
-
-    if (!TABLE_ROW_REGEXP.test(firstLine) || !TABLE_DIVIDER_REGEXP.test(secondLine)) {
+    const secondLine = paragraphToMarkdown(dividerNode)
+    if (!TABLE_DIVIDER_REGEXP.test(secondLine)) {
       i++
       continue
     }
 
-    // Parse table structure from the lines
+    const tableParagraphs: ElementNode[] = [node, dividerNode]
+    const bodyLines: string[] = []
+    let nextIndex = i + 2
+    while (nextIndex < children.length) {
+      const candidate = children[nextIndex]
+      if (!(candidate instanceof ElementNode) || candidate.getType() !== 'paragraph') {
+        break
+      }
+      const line = paragraphToMarkdown(candidate)
+      if (!TABLE_ROW_REGEXP.test(line)) {
+        break
+      }
+      tableParagraphs.push(candidate)
+      bodyLines.push(line)
+      nextIndex++
+    }
+
     const headerCells = safeSplitRow(firstLine)
     const columnAlignments = parseColumnAlignments(secondLine)
-    const bodyRows = lines.slice(2).map((line) => safeSplitRow(line))
+    const bodyRows = bodyLines.map((line) => safeSplitRow(line))
 
     // Calculate dimensions
     let colCount = headerCells.length
@@ -335,12 +370,10 @@ export function $convertMarkdownTablesToTableNodes(): void {
       }
     })
 
-    // Replace the paragraph with the table
+    // Replace every source paragraph in the table block with one table node.
     node.insertBefore(table)
-    node.remove()
+    tableParagraphs.forEach(paragraph => paragraph.remove())
 
-    // Update position after replacement
-    const updatedChildren = root.getChildren()
-    i = updatedChildren.indexOf(table) + 1
+    i = root.getChildren().indexOf(table) + 1
   }
 }

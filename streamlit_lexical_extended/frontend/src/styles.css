@@ -1,3 +1,37 @@
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.streamlit-lexical-react-root,
+.streamlit-lexical-editor {
+  width: 100%;
+  min-width: 0;
+}
+
+.streamlit-lexical-react-root:has(.is-fixed-height),
+.streamlit-lexical-editor.is-fixed-height,
+.streamlit-lexical-editor.is-fixed-height .editor-container,
+.streamlit-lexical-editor.is-fixed-height .editor-inner {
+  height: 100%;
+  min-height: 0;
+}
+
+.streamlit-lexical-editor,
+.streamlit-lexical-editor *,
+.streamlit-lexical-editor *::before,
+.streamlit-lexical-editor *::after {
+  box-sizing: border-box;
+}
+
+.streamlit-lexical-editor button,
+.streamlit-lexical-editor input,
+.streamlit-lexical-editor select,
+.streamlit-lexical-editor textarea {
+  font: inherit;
+}
+
 .editor-placeholder {
   color: #ccc !important;
   overflow: hidden;
@@ -980,4 +1014,127 @@ i.list-ol {
 
 .editor-listitem:last-child {
   margin-bottom: 0;
+}
+
+/* Components v2 theme integration. Keep the editor visually equivalent while
+   inheriting Streamlit's active light, dark, sidebar, or custom theme. */
+.streamlit-lexical-editor {
+  --lexical-background: var(--st-background-color, #ffffff);
+  --lexical-secondary-background: var(
+    --st-secondary-background-color,
+    #f0f2f6
+  );
+  --lexical-text: var(--st-text-color, #262730);
+  --lexical-muted-text: var(--st-gray-text-color, #6b7280);
+  --lexical-border: var(--st-border-color, #d1d5db);
+  --lexical-primary: var(--st-primary-color, #ff4b4b);
+  color: var(--lexical-text);
+  color-scheme: light dark;
+  font-family: var(--st-font, "Source Sans Pro", sans-serif);
+}
+
+.streamlit-lexical-editor *,
+.editor-input,
+.toolbar select.toolbar-item,
+.table-context-menu button {
+  color: var(--lexical-text);
+}
+
+.editor-container,
+.editor-inner,
+.editor-input,
+.toolbar,
+.editor-input table,
+.editor-input td,
+.editor-table,
+.editor-table-cell,
+.table-insert-popover,
+.table-context-menu,
+.toolbar select.toolbar-item,
+.link-dialog,
+.link-dialog-buttons button {
+  background-color: var(--lexical-background);
+}
+
+.editor-placeholder,
+.table-insert-footer,
+.table-context-menu .section-label,
+.table-cell-chevron,
+.toolbar .toolbar-item .text {
+  color: var(--lexical-muted-text) !important;
+}
+
+.editor-input table,
+.editor-input th,
+.editor-input td,
+.editor-table,
+.editor-table-cell,
+.editor-table-cell-header,
+.toolbar,
+.table-insert-popover,
+.table-insert-cell,
+.table-context-menu,
+.table-context-menu button,
+.table-cell-chevron,
+.toolbar .divider,
+.table-context-menu .divider,
+.link-dialog-field input,
+.link-dialog-buttons button {
+  border-color: var(--lexical-border);
+}
+
+.editor-input th,
+.editor-table-cell-header,
+.editor-input tr:hover td,
+.editor-input tr:hover th,
+.toolbar .toolbar-item:hover:not([disabled]),
+.toolbar select.toolbar-item:hover,
+.table-insert-cell,
+.table-context-menu button:hover,
+.editor-quote {
+  background-color: var(--lexical-secondary-background);
+}
+
+.editor-input td:hover,
+.editor-input th:hover,
+.editor-input td.selected,
+.editor-input th.selected,
+.toolbar button.toolbar-item.active,
+.toolbar .table-btn.active {
+  background-color: color-mix(
+    in srgb,
+    var(--lexical-primary) 14%,
+    var(--lexical-background)
+  );
+}
+
+.editor-input td:has(> *:focus),
+.editor-input th:has(> *:focus),
+.editor-table-cell:focus-within,
+.editor-table-cell-header:focus-within {
+  outline-color: var(--lexical-primary);
+  background-color: var(--lexical-background);
+  box-shadow: inset 0 0 0 1px var(--lexical-primary);
+}
+
+.table-insert-cell:hover,
+.table-insert-cell.active,
+.table-context-menu button:hover,
+.table-cell-chevron:hover,
+.link-dialog-field input:focus {
+  border-color: var(--lexical-primary);
+}
+
+.table-insert-cell.active {
+  background-color: var(--lexical-primary);
+}
+
+.editor-link,
+.table-cell-chevron:hover {
+  color: var(--lexical-primary);
+}
+
+.editor-quote {
+  border-left-color: var(--lexical-border);
+  color: var(--lexical-muted-text);
 }

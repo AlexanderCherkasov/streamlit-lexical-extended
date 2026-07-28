@@ -282,7 +282,7 @@ export default function ToolbarPlugin() {
                             columns: String(col),
                             rows: String(row),
                             includeHeaders: { rows: true, columns: false },
-                          } as any);
+                          });
                           setTablePickerOpen(false);
                         }}
                         title={`${row} x ${col}`}

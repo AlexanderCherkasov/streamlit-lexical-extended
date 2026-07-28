@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: streamlit_lexical_extended/frontend/package-lock.json
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: streamlit_lexical_extended/frontend
+      - name: Type-check and build
+        run: npm run build
+        working-directory: streamlit_lexical_extended/frontend
+      - name: Verify committed assets
+        run: git diff --exit-code -- streamlit_lexical_extended/frontend/build
+
+  unit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - python: "3.10"
+            streamlit: "==1.51.*"
+          - python: "3.13"
+            streamlit: ">=1.51"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - name: Install package
+        run: python -m pip install -e ".[dev]" "streamlit${{ matrix.streamlit }}"
+      - name: Run unit tests
+        run: python -m pytest tests -q
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: streamlit_lexical_extended/frontend/package-lock.json
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: streamlit_lexical_extended/frontend
+      - name: Install package and browser
+        run: |
+          python -m pip install -e ".[dev]"
+          python -m playwright install --with-deps chromium
+      - name: Run browser tests
+        env:
+          RUN_STREAMLIT_E2E: "1"
+        run: python -m pytest streamlit_lexical_extended/tests/e2e -q
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: streamlit_lexical_extended/frontend/package-lock.json
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Build frontend
+        working-directory: streamlit_lexical_extended/frontend
+        run: |
+          npm ci
+          npm run build
+      - name: Build and check distributions
+        run: |
+          python -m pip install build twine
+          python -m build
+          python -m twine check dist/*
+      - uses: actions/upload-artifact@v7
+        with:
+          name: python-distributions
+          path: dist/

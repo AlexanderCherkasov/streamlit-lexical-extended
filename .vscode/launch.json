@@ -1,0 +1,76 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Streamlit: run example",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": [
+        "run",
+        "${workspaceFolder}/streamlit_lexical_extended/example.py",
+        "--server.address",
+        "127.0.0.1",
+        "--server.port",
+        "8501"
+      ],
+      "preLaunchTask": "Project: prepare",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "serverReadyAction": {
+        "pattern": "(?:Local URL|URL):\\s+(https?://\\S+)",
+        "uriFormat": "%s",
+        "action": "openExternally"
+      }
+    },
+    {
+      "name": "Streamlit: develop frontend",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": [
+        "run",
+        "${workspaceFolder}/streamlit_lexical_extended/example.py",
+        "--server.address",
+        "127.0.0.1",
+        "--server.port",
+        "8501"
+      ],
+      "preLaunchTask": "Development: prepare with frontend watch",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "serverReadyAction": {
+        "pattern": "(?:Local URL|URL):\\s+(https?://\\S+)",
+        "uriFormat": "%s",
+        "action": "openExternally"
+      }
+    },
+    {
+      "name": "Tests: unit",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["${workspaceFolder}/tests", "-q"],
+      "preLaunchTask": "Python: sync",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Tests: e2e",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "${workspaceFolder}/streamlit_lexical_extended/tests/e2e",
+        "-q",
+        "-s"
+      ],
+      "env": {
+        "RUN_STREAMLIT_E2E": "1"
+      },
+      "preLaunchTask": "E2E: prepare",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    }
+  ]
+}

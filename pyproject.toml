@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=77.0.3", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "streamlit-lexical-extended"
+version = "0.3.0"
+description = "A Streamlit Components v2 rich text editor powered by Lexical with Markdown and table support."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "Alexander Cherkasov" }]
+keywords = ["streamlit", "lexical", "markdown", "rich-text-editor", "component"]
+dependencies = ["streamlit>=1.51"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Text Editors",
+]
+
+[project.urls]
+Homepage = "https://github.com/AlexanderCherkasov/streamlit-lexical-extended-"
+Documentation = "https://github.com/AlexanderCherkasov/streamlit-lexical-extended-#readme"
+Source = "https://github.com/AlexanderCherkasov/streamlit-lexical-extended-"
+Issues = "https://github.com/AlexanderCherkasov/streamlit-lexical-extended-/issues"
+Changelog = "https://github.com/AlexanderCherkasov/streamlit-lexical-extended-/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2",
+  "playwright>=1.39",
+  "pytest>=8.3",
+  "requests>=2.32",
+  "twine>=6.1",
+]
+
+[tool.setuptools.packages.find]
+include = ["streamlit_lexical_extended*"]
+exclude = ["streamlit_lexical_extended.tests*"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+streamlit_lexical_extended = [
+  "frontend/build/**/*",
+  "pyproject.toml",
+]
+
+[tool.pytest.ini_options]
+markers = ["e2e: browser-based end-to-end tests"]
+testpaths = ["tests"]

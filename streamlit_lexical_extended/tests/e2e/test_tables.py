@@ -1,50 +1,54 @@
-from playwright.sync_api import Page, expect
 import pytest
+from playwright.sync_api import Page, expect
 
 
 @pytest.mark.e2e
-def test_initial_table_renders_in_editor_and_output(page: Page, server: str):
-    # Open Streamlit example app
+def test_table_markdown_round_trip_and_row_column_actions(page: Page, server: str):
     page.goto(server, timeout=60_000)
+    editor = page.locator('[contenteditable="true"]').first
+    table = editor.locator("table")
+    expect(table).to_be_visible(timeout=30_000)
+    expect(table.locator("tr")).to_have_count(3)
+    expect(page.locator('[data-testid="stText"]').first).to_contain_text(
+        "| Product | Owner | Status |"
+    )
 
-    # Wait for the app header
-    expect(page.locator("text=Lexical Rich Text Editor")).to_be_visible()
+    table.locator("td").first.click()
+    chevron = page.locator(".table-cell-chevron")
+    expect(chevron).to_be_visible()
+    chevron.click()
+    menu = page.locator(".table-context-menu")
+    expect(menu).to_be_visible()
 
-    # There should be at least one <table> in the editor and one in the rendered output
-    # The simplest robust assertion: at least 2 tables on the page
-    page.wait_for_selector("table", timeout=30_000)
-    tables = page.locator("table")
-    expect(tables).to_have_count(2)
+    row_section = menu.locator(".menu-section").filter(has_text="Row")
+    row_section.get_by_role("button", name="+Below", exact=True).click()
+    expect(table.locator("tr")).to_have_count(4)
 
-    # Verify some cells from the example exist in the DOM
-    expect(page.locator("text=Alice")).to_be_visible()
-    expect(page.locator("text=London")).to_be_visible()
+    table.locator("td").first.click()
+    page.locator(".table-cell-chevron").click()
+    column_section = page.locator(".menu-section").filter(has_text="Column")
+    column_section.get_by_role("button", name="+Right", exact=True).click()
+    expect(table.locator("tr").first.locator("th, td")).to_have_count(4)
+
+    table.locator("td").first.click()
+    page.locator(".table-cell-chevron").click()
+    row_section = page.locator(".menu-section").filter(has_text="Row")
+    row_section.get_by_role("button", name="Delete").click()
+    expect(table.locator("tr")).to_have_count(3)
 
 
 @pytest.mark.e2e
-def test_plaintext_change_updates_editor_and_output(page: Page, server: str):
+def test_insert_table_toolbar(page: Page, server: str):
     page.goto(server, timeout=60_000)
+    editor = page.locator('[contenteditable="true"]').first
+    expect(editor).to_be_visible(timeout=30_000)
+    expect(editor.locator("table")).to_have_count(1)
+    initial_count = editor.locator("table").count()
 
-    # Replace the plain text input with a new table
-    new_md = (
-        "| Product | Qty | Price |\n"
-        "| --- | ---: | ---: |\n"
-        "| Pen | 2 | 1.5 |\n"
-        "| Notebook | 1 | 4.0 |\n"
-    )
+    editor.click()
+    page.keyboard.press("End")
+    page.keyboard.press("Enter")
+    page.get_by_role("button", name="Insert Table").first.click()
+    page.locator('.table-insert-cell[title="2 x 2"]').click()
 
-    # Find the text area via its label text
-    textarea = page.get_by_label(
-        "Edit the Markdown below and it will be passed to the editor (overwrites editor content)"
-    )
-    textarea.click()
-    textarea.fill(new_md)
-
-    # Streamlit should rerun; wait for the new cell text to appear
-    page.wait_for_timeout(500)  # give Streamlit a moment to rerun
-    expect(page.locator("text=Product")).to_be_visible()
-    expect(page.locator("text=Notebook")).to_be_visible()
-
-    # There should still be at least 2 tables (editor + rendered output)
-    tables = page.locator("table")
-    expect(tables).to_have_count(2)
+    expect(editor.locator("table")).to_have_count(initial_count + 1)

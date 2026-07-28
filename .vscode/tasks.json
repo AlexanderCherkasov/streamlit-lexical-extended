@@ -1,0 +1,168 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Python: sync",
+      "type": "process",
+      "command": "uv",
+      "args": ["sync", "--extra", "dev"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: install",
+      "type": "process",
+      "command": "npm",
+      "args": ["install"],
+      "options": {
+        "cwd": "${workspaceFolder}/streamlit_lexical_extended/frontend"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: typecheck",
+      "type": "process",
+      "command": "npm",
+      "args": ["run", "typecheck"],
+      "options": {
+        "cwd": "${workspaceFolder}/streamlit_lexical_extended/frontend"
+      },
+      "problemMatcher": "$tsc"
+    },
+    {
+      "label": "Frontend: build",
+      "type": "process",
+      "command": "npm",
+      "args": ["run", "build"],
+      "options": {
+        "cwd": "${workspaceFolder}/streamlit_lexical_extended/frontend"
+      },
+      "dependsOn": "Frontend: install",
+      "problemMatcher": "$tsc"
+    },
+    {
+      "label": "Frontend: watch",
+      "type": "process",
+      "command": "npm",
+      "args": ["run", "dev"],
+      "options": {
+        "cwd": "${workspaceFolder}/streamlit_lexical_extended/frontend"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": {
+          "regexp": "^__vite_no_match__:(.*)$",
+          "message": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "vite v",
+          "endsPattern": "watching for file changes"
+        }
+      }
+    },
+    {
+      "label": "Project: prepare",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Python: sync",
+        "Frontend: build"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Development: prepare with frontend watch",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Python: sync",
+        "Frontend: install",
+        "Frontend: watch"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "App: run example",
+      "type": "process",
+      "command": "uv",
+      "args": [
+        "run",
+        "streamlit",
+        "run",
+        "streamlit_lexical_extended/example.py"
+      ],
+      "dependsOn": "Project: prepare",
+      "problemMatcher": []
+    },
+    {
+      "label": "Tests: unit",
+      "type": "process",
+      "command": "uv",
+      "args": ["run", "pytest", "tests", "-q"],
+      "dependsOn": "Python: sync",
+      "problemMatcher": []
+    },
+    {
+      "label": "Playwright: install Chromium",
+      "type": "process",
+      "command": "uv",
+      "args": ["run", "playwright", "install", "chromium"],
+      "problemMatcher": []
+    },
+    {
+      "label": "E2E: prepare",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Project: prepare",
+        "Playwright: install Chromium"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Tests: e2e",
+      "type": "process",
+      "command": "uv",
+      "args": [
+        "run",
+        "pytest",
+        "streamlit_lexical_extended/tests/e2e",
+        "-q",
+        "-s"
+      ],
+      "options": {
+        "env": {
+          "RUN_STREAMLIT_E2E": "1"
+        }
+      },
+      "dependsOn": "E2E: prepare",
+      "problemMatcher": []
+    },
+    {
+      "label": "Project: verify",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Project: prepare",
+        "Tests: unit"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Package: build",
+      "type": "process",
+      "command": "uv",
+      "args": ["run", "python", "-m", "build"],
+      "dependsOn": "Project: verify",
+      "problemMatcher": []
+    },
+    {
+      "label": "Package: check",
+      "type": "shell",
+      "command": "uv run twine check dist/*",
+      "dependsOn": "Package: build",
+      "problemMatcher": []
+    }
+  ]
+}

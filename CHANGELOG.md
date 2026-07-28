@@ -2,6 +2,55 @@
 
 All notable changes to streamlit-lexical-extended will be documented in this file.
 
+## [0.3.0] - 2026-07-28
+
+### Changed
+
+- Migrated from iframe-based Custom Components v1 to package-based Streamlit
+  Custom Components v2.
+- Replaced the legacy string-returning API with one native
+  `streamlit_lexical_extended()` API returning a named `ComponentResult`.
+- Moved Python packaging to `pyproject.toml` and included the component
+  manifest and hashed frontend assets in wheels.
+- Replaced Create React App with a Vite library build.
+- Updated to React 19, Lexical 0.48, TypeScript 7, Vite 8, and
+  `@streamlit/component-v2-lib` 0.2.
+- Replaced the old Streamlit iframe bridge with the Components v2 mounting
+  renderer, named state values, native width, and content/fixed height.
+- Updated table actions to stable Lexical APIs and made popovers safe inside
+  Streamlit's Shadow DOM.
+- Replaced global Bootstrap with a local reset and Streamlit theme variables.
+
+### Added
+
+- Native `width` support for the public API.
+- Explicit argument validation using `TypeError` and `ValueError`.
+- Tests for native state, callbacks, update semantics, direct-DOM rendering,
+  multiple editors, fixed/automatic height, formatting, tables, and console
+  errors.
+- A public example with a complete Markdown input/output round trip through
+  the native Components v2 API.
+- Reproducible `uv.lock`, one-command VS Code tasks and launch profiles,
+  GitHub Actions CI, and tokenless PyPI Trusted Publishing.
+- Concise contributor and security documentation.
+
+### Fixed
+
+- Prevented React roots from reusing a stale Streamlit mounting placeholder.
+- Replaced dynamically highlighted output code blocks in the example with
+  stable read-only Markdown fields, avoiding Streamlit's `insertBefore`
+  reconciliation error during component reruns.
+
+### Removed
+
+- `components.v1.declare_component`, development URL selection, `_RELEASE`,
+  `streamlit-component-lib`, Create React App, the component iframe, and the
+  global Bootstrap stylesheet.
+- The legacy string-returning wrapper, its internal state key adapter, the
+  redundant `_v2` function suffix, and the `overwrite` option.
+- Obsolete v0.2 reports, screenshots, manual test applications, generated test
+  results, duplicated development environments, and repository-local secrets.
+
 ## [0.2.0] - 2025-10-01
 
 ### Fixed

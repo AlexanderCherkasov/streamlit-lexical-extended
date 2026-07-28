@@ -1,9 +1,8 @@
+import type {
+  FrontendRendererArgs,
+  FrontendState,
+} from "@streamlit/component-v2-lib"
 import React, { useEffect, useRef, useCallback, useMemo } from "react"
-import {
-  Streamlit,
-  withStreamlitConnection,
-  ComponentProps,
-} from "streamlit-component-lib"
 import { LexicalComposer } from "@lexical/react/LexicalComposer"
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin"
 import { ContentEditable } from "@lexical/react/LexicalContentEditable"
@@ -15,7 +14,7 @@ import ToolbarPlugin from "./plugins/ToolbarPlugin"
 
 import theme from "./theme"
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin"
-import { $getRoot, CLEAR_HISTORY_COMMAND } from "lexical"
+import { $getRoot, CLEAR_HISTORY_COMMAND, type EditorState } from "lexical"
 import {
   $convertFromMarkdownString,
   $convertToMarkdownString,
@@ -37,54 +36,57 @@ import { TABLE_TRANSFORMER, $convertMarkdownTablesToTableNodes } from "./markdow
 // Filter out link transformers from default TRANSFORMERS
 const SAFE_TRANSFORMERS = TRANSFORMERS.filter(transformer => {
   // Remove link-related transformers by checking their export function or regExp
-  if (transformer.type === 'text-match' && (transformer as any).regExp && (transformer as any).regExp.toString().includes('\\[')) {
+  if (
+    transformer.type === 'text-match' &&
+    transformer.regExp.toString().includes('\\[')
+  ) {
     return false;
   }
   return true;
 })
 
-interface StreamlitLexicalArgs {
-  height?: number | null
-  min_height: number
+export interface StreamlitLexicalState extends FrontendState {
   value: string
-  placeholder: string
-  debounce: number
-  key: string
-  overwrite: boolean
 }
 
-// Generate a unique instance ID for each editor
-let instanceCounter = 0
+export interface StreamlitLexicalData {
+  value: string | null
+  placeholder: string
+  debounce: number
+  minHeight: number
+  fixedHeight: number | null
+}
 
-function StreamlitLexical({ args, theme: streamlitTheme }: ComponentProps) {
-  const typedArgs = args as StreamlitLexicalArgs
+interface StreamlitLexicalProps extends StreamlitLexicalData {
+  instanceKey: string
+  setStateValue: FrontendRendererArgs<
+    StreamlitLexicalState,
+    StreamlitLexicalData
+  >["setStateValue"]
+}
 
-  // Generate stable instance ID for this component
-  const instanceIdRef = useRef<string>(`lexical-${++instanceCounter}-${Date.now()}`)
-
+function StreamlitLexical({
+  value,
+  placeholder,
+  debounce,
+  minHeight,
+  fixedHeight,
+  instanceKey,
+  setStateValue,
+}: StreamlitLexicalProps) {
   // Store initial value - only set once
-  const initialValueRef = useRef<string>(typedArgs.value || "")
+  const initialValueRef = useRef<string>(value ?? "")
 
   // Track the current markdown to detect external changes
-  const currentMarkdownRef = useRef<string>(typedArgs.value || "")
-
-  // Track if component has mounted and sent initial value
-  const hasSentInitialValue = useRef(false)
+  const currentMarkdownRef = useRef<string>(value ?? "")
 
   // Debounce timer ref
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Track update version to prevent race conditions
-  const updateVersionRef = useRef(0)
-
-  // Ref to the editor container for height calculation
-  const editorContainerRef = useRef<HTMLDivElement>(null)
-
-  // Generate unique namespace using key or instance ID
-  const namespace = useMemo(() => {
-    const keyPart = typedArgs.key || instanceIdRef.current
-    return `StreamlitLexicalEditor-${keyPart}`
-  }, [typedArgs.key])
+  const namespace = useMemo(
+    () => `StreamlitLexicalEditor-${instanceKey}`,
+    [instanceKey],
+  )
 
   // Create editor config - stable reference, only created once per namespace
   const editorConfig = useMemo(() => ({
@@ -115,80 +117,30 @@ function StreamlitLexical({ args, theme: streamlitTheme }: ComponentProps) {
     ],
   }), [namespace]) // Only recreate when namespace changes
 
-  // Function to update frame height based on mode
-  const updateFrameHeight = useCallback(() => {
-    if (typedArgs.height) {
-      // Fixed height mode
-      Streamlit.setFrameHeight(typedArgs.height)
-    } else {
-      // Auto-expand mode: measure content and respect min_height
-      if (editorContainerRef.current) {
-        const contentHeight = editorContainerRef.current.scrollHeight
-        const finalHeight = Math.max(contentHeight, typedArgs.min_height || 400)
-        Streamlit.setFrameHeight(finalHeight)
-      } else {
-        // Fallback if ref not ready
-        Streamlit.setFrameHeight(typedArgs.min_height || 400)
-      }
-    }
-  }, [typedArgs.height, typedArgs.min_height])
-
-  // Send initial value to Streamlit on mount and set frame height
-  useEffect(() => {
-    if (!hasSentInitialValue.current) {
-      const initialValue = typedArgs.value || ""
-      currentMarkdownRef.current = initialValue
-      Streamlit.setComponentValue(initialValue)
-      hasSentInitialValue.current = true
-    }
-
-    // Set initial frame height - CRITICAL: without this, iframe has height 0
-    updateFrameHeight()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Only run on mount
-
-  // Update height when content changes (auto-expand mode only)
-  useEffect(() => {
-    if (!typedArgs.height) {
-      // Only in auto-expand mode
-      const timer = setTimeout(() => {
-        updateFrameHeight()
-      }, 100) // Small delay to let DOM update
-
-      return () => clearTimeout(timer)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [typedArgs.height, updateFrameHeight]) // currentMarkdownRef is intentionally excluded
-
   // Handle editor changes with proper debouncing
-  const handleEditorChange = useCallback((editorState: any) => {
-    editorState.read(() => {
-      const markdown = $convertToMarkdownString([TABLE_TRANSFORMER, ...SAFE_TRANSFORMERS], undefined, true)
+  const handleEditorChange = useCallback(
+    (editorState: EditorState) => {
+      editorState.read(() => {
+        const markdown = $convertToMarkdownString(
+          [TABLE_TRANSFORMER, ...SAFE_TRANSFORMERS],
+          undefined,
+          true,
+        )
 
-      // Clear existing timeout
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current)
-      }
-
-      // Create new timeout
-      debounceTimerRef.current = setTimeout(() => {
-        // Update our tracking ref
-        currentMarkdownRef.current = markdown
-        updateVersionRef.current++
-
-        // Send to Streamlit
-        const valueToSend = markdown !== null && markdown !== undefined ? markdown : ""
-        Streamlit.setComponentValue(valueToSend)
-
-        // Update height in auto-expand mode
-        if (!typedArgs.height) {
-          setTimeout(() => updateFrameHeight(), 50)
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current)
         }
-      }, typedArgs.debounce)
-    })
-  }, [typedArgs.debounce, typedArgs.height, updateFrameHeight])
 
-  // Cleanup debounce timer on unmount
+        debounceTimerRef.current = setTimeout(() => {
+          const valueToSend = markdown ?? ""
+          currentMarkdownRef.current = valueToSend
+          setStateValue("value", valueToSend)
+        }, debounce)
+      })
+    },
+    [debounce, setStateValue],
+  )
+
   useEffect(() => {
     return () => {
       if (debounceTimerRef.current) {
@@ -197,33 +149,29 @@ function StreamlitLexical({ args, theme: streamlitTheme }: ComponentProps) {
     }
   }, [])
 
-  const style: React.CSSProperties = {}
-  if (streamlitTheme) {
-    style.borderColor = streamlitTheme.primaryColor
-  }
-
-  // Calculate editor style based on mode
-  const editorStyle: React.CSSProperties = typedArgs.height
+  const isFixedHeight = fixedHeight !== null
+  const editorStyle: React.CSSProperties = isFixedHeight
     ? {
-        // Fixed height mode
-        minHeight: `${typedArgs.height}px`,
-        maxHeight: `${typedArgs.height}px`,
+        height: "100%",
+        minHeight: 0,
         overflowY: "auto",
       }
     : {
-        // Auto-expand mode
-        minHeight: `${typedArgs.min_height || 400}px`,
-        overflowY: "auto",
+        minHeight: `${minHeight}px`,
+        overflowY: "visible",
       }
 
   return (
-    <div ref={editorContainerRef} style={style} className="streamlit-lexical-editor">
+    <div
+      className={`streamlit-lexical-editor ${
+        isFixedHeight ? "is-fixed-height" : "is-auto-height"
+      }`}
+      style={isFixedHeight ? { height: `${fixedHeight}px` } : undefined}
+    >
       <LexicalComposer initialConfig={editorConfig} key={namespace}>
         <EditorContentUpdater
-          content={typedArgs.value || ""}
-          overwrite={typedArgs.overwrite}
+          content={value}
           currentMarkdownRef={currentMarkdownRef}
-          updateVersionRef={updateVersionRef}
         />
         <div className="editor-container">
           <ToolbarPlugin />
@@ -235,7 +183,7 @@ function StreamlitLexical({ args, theme: streamlitTheme }: ComponentProps) {
                   style={editorStyle}
                 />
               }
-              placeholder={<Placeholder text={typedArgs.placeholder} />}
+              placeholder={<Placeholder text={placeholder} />}
               ErrorBoundary={LexicalErrorBoundary}
             />
             <HistoryPlugin />
@@ -255,62 +203,53 @@ function StreamlitLexical({ args, theme: streamlitTheme }: ComponentProps) {
 
 function EditorContentUpdater({
   content,
-  overwrite,
   currentMarkdownRef,
-  updateVersionRef,
 }: {
-  content: string
-  overwrite: boolean
+  content: string | null
   currentMarkdownRef: React.MutableRefObject<string>
-  updateVersionRef: React.MutableRefObject<number>
 }) {
   const [editor] = useLexicalComposerContext()
-  const prevContentRef = useRef<string>(content)
-  const localVersionRef = useRef<number>(0)
+  const prevContentRef = useRef<string | null>(content)
 
   useEffect(() => {
+    // None means "do not send an external update". An empty string is an
+    // explicit request to clear the editor.
+    if (content === null) {
+      return
+    }
+
     // Skip if content hasn't actually changed
     if (content === prevContentRef.current) {
       return
     }
 
-    // Skip if this is just our own update echoing back
-    if (content === currentMarkdownRef.current && localVersionRef.current === updateVersionRef.current) {
+    prevContentRef.current = content
+
+    // A component state update returns to Python and then comes back through
+    // data.value. It is already present in Lexical, so importing it again
+    // would reset selection, focus, and history.
+    if (content === currentMarkdownRef.current) {
       return
     }
 
-    prevContentRef.current = content
-    localVersionRef.current = updateVersionRef.current
-
     editor.update(() => {
       const root = $getRoot()
-      const currentText = root.getTextContent()
+      root.clear()
 
-      // Only update if:
-      // 1. Root is empty, OR
-      // 2. overwrite is true AND content is different from what we have
-      if (currentText === "" || (overwrite && content !== currentMarkdownRef.current)) {
-        root.clear()
-
-        if (content) {
-          $convertFromMarkdownString(
-            content,
-            [TABLE_TRANSFORMER, ...SAFE_TRANSFORMERS],
-            undefined,
-            true
-          )
-          // Convert markdown tables to table nodes
-          $convertMarkdownTablesToTableNodes()
-        }
-
-        // Clear history to prevent undo to empty state
-        editor.dispatchCommand(CLEAR_HISTORY_COMMAND, undefined)
-
-        // Update our ref to match the new content
-        currentMarkdownRef.current = content
+      if (content) {
+        $convertFromMarkdownString(
+          content,
+          [TABLE_TRANSFORMER, ...SAFE_TRANSFORMERS],
+          undefined,
+          true
+        )
+        $convertMarkdownTablesToTableNodes()
       }
+
+      editor.dispatchCommand(CLEAR_HISTORY_COMMAND, undefined)
+      currentMarkdownRef.current = content
     })
-  }, [editor, content, overwrite, currentMarkdownRef, updateVersionRef])
+  }, [editor, content, currentMarkdownRef])
 
   return null
 }
@@ -319,4 +258,4 @@ function Placeholder({ text }: { text: string }) {
   return <div className="editor-placeholder">{text}</div>
 }
 
-export default withStreamlitConnection(StreamlitLexical)
+export default StreamlitLexical

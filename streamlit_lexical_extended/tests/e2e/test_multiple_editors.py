@@ -1,14 +1,11 @@
-"""
-Playwright E2E tests for multiple editors on the same page.
-
-Tests the critical fix: multiple editors should not interfere with each other.
-This was one of the main issues causing text to disappear in v0.1.x.
-"""
-import pytest
-from playwright.sync_api import Page, expect
 import subprocess
+import sys
 import time
+from pathlib import Path
+
+import pytest
 import requests
+from playwright.sync_api import Page, expect
 
 
 TEST_PORT_MULTIPLE = 8504
@@ -30,13 +27,16 @@ def wait_for_server(url: str, timeout: float = 30.0) -> None:
 
 
 @pytest.fixture(scope="module")
-def multiple_editors_server(tmp_path_factory):
-    """Start the dialog_two_editors.py example."""
-    import sys
-    from pathlib import Path
-    
+def multiple_editors_server():
+    """Start the dedicated multiple-editors test app."""
     repo_root = Path(__file__).resolve().parents[3]
-    test_app = repo_root / "streamlit_lexical_extended" / "dialog_two_editors.py"
+    test_app = (
+        repo_root
+        / "streamlit_lexical_extended"
+        / "tests"
+        / "e2e"
+        / "multiple_editors_app.py"
+    )
     
     cmd = [
         sys.executable,
