@@ -101,19 +101,14 @@ def test_component_inherits_parent_rtl_layout(page: Page, rtl_server: str):
     column_buttons = menu.locator(".menu-section").filter(has_text="Column")
     expect(column_buttons.locator("button").first).to_have_text("+Right")
 
-    editor.evaluate(
-        """node => {
-            const selection = node.ownerDocument.getSelection();
-            const range = node.ownerDocument.createRange();
-            range.selectNodeContents(node);
-            range.collapse(false);
-            selection.removeAllRanges();
-            selection.addRange(range);
-            node.focus();
-        }"""
-    )
+    page.keyboard.press("Escape")
+    p = editor.locator("p").first
+    p.click()
+    page.keyboard.press("End")
     page.keyboard.press("Enter")
-    page.keyboard.insert_text("עדכון חדש")
+    page.keyboard.type("עדכון חדש")
+
+    expect(editor).to_contain_text("עדכון חדש", timeout=5_000)
 
     output = page.get_by_role(
         "textbox",

@@ -2,6 +2,13 @@
 
 All notable changes to streamlit-lexical-extended will be documented in this file.
 
+## [0.3.8] - 2026-07-28
+
+### Changed
+
+- **Python Requirement Bump**: Raised minimum required Python version to `>=3.11` and updated CI workflows to test Python 3.11 and 3.13.
+- **Session State Fix**: Resolved `StreamlitAPIException` when instantiating widgets with session state keys.
+
 ## [0.3.7] - 2026-07-28
 
 ### Fixed

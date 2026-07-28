@@ -45,14 +45,26 @@ p, div, input, label, h1, h2, h3, h4, h5, h6 {
         unsafe_allow_html=True,
     )
 
+    if "rtl_output" not in st.session_state:
+        st.session_state.rtl_output = RTL_MARKDOWN
+
+    def rtl_changed() -> None:
+        val = st.session_state.get("rtl_editor")
+        if hasattr(val, "value"):
+            val = val.value
+        if isinstance(val, dict):
+            val = val.get("value", "")
+        if isinstance(val, str):
+            st.session_state.rtl_output = val
+
     result = streamlit_lexical_extended(
         value=RTL_MARKDOWN,
         placeholder="התחילו לכתוב…",
         key="rtl_editor",
         height=480,
         debounce=200,
+        on_change=rtl_changed,
     )
-    st.session_state.rtl_output = result.value
     st.text_area(
         "RTL Markdown output",
         key="rtl_output",

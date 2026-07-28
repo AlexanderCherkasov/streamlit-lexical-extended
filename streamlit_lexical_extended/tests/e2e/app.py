@@ -29,7 +29,7 @@ if "callback_count" not in st.session_state:
 
 
 def editor_changed() -> None:
-    st.session_state.document = st.session_state.main_editor.value
+    st.session_state.document = st.session_state.main_editor
     st.session_state.callback_count += 1
 
 
@@ -51,7 +51,7 @@ result = streamlit_lexical_extended(
 
 st.write(f"Callback count: {st.session_state.callback_count}")
 st.subheader("Synchronized Markdown")
-st.text(result.value)
+st.text(result)
 
 st.subheader("Automatic height native editor")
 native = streamlit_lexical_extended(
@@ -60,7 +60,7 @@ native = streamlit_lexical_extended(
     height=None,
     min_height=180,
 )
-st.text(native.value)
+st.text(native)
 
 st.subheader("Independent editors")
 left, right = st.columns(2)

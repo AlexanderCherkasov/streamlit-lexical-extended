@@ -192,14 +192,7 @@ def streamlit_lexical_extended(
 
     internal_value = value
     if key is not None:
-        state_key = f"_lexical_internal_val_{key}"
-        if state_key in st.session_state:
-            if value == st.session_state[state_key]:
-                internal_value = None
-            else:
-                st.session_state[state_key] = value
-        else:
-            st.session_state[state_key] = value
+        st.session_state[f"_lexical_internal_val_{key}"] = value
 
     def _handle_on_change() -> None:
         if key is not None and key in st.session_state:
@@ -251,7 +244,6 @@ def streamlit_lexical_extended(
 
     if key is not None and result_str is not None:
         st.session_state[f"_lexical_internal_val_{key}"] = result_str
-        st.session_state[key] = result_str
 
     return result_str if isinstance(result_str, str) else (value or "")
 

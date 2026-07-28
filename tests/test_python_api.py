@@ -56,10 +56,10 @@ def test_internal_value_deduplication_on_rerun(component_spy):
     assert res1 == "Hello"
     assert component_spy[0]["data"]["value"] == "Hello"
 
-    # Second render with same value (e.g. natural Streamlit rerun): internal_value passed to frontend is None
+    # Second render with same value: value passed to frontend is preserved
     res2 = lexical.streamlit_lexical_extended(value="Hello", key="ed1")
     assert res2 == "Hello"
-    assert component_spy[1]["data"]["value"] is None
+    assert component_spy[1]["data"]["value"] == "Hello"
 
     # Third render with programmatic change: new value passed to frontend
     res3 = lexical.streamlit_lexical_extended(value="New Hello", key="ed1")

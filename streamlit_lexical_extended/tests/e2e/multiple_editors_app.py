@@ -10,13 +10,25 @@ st.session_state.setdefault("document_a", "# Editor 1\n\nStart typing...")
 st.session_state.setdefault("document_b", "# Editor 2\n\nStart typing...")
 
 
+if "show_dialog" not in st.session_state:
+    st.session_state.show_dialog = False
+
+
+def open_dialog() -> None:
+    st.session_state.show_dialog = True
+
+
+def close_dialog() -> None:
+    st.session_state.show_dialog = False
+
+
 @st.dialog("Two editors", width="large")
 def show_editors() -> None:
     def document_a_changed() -> None:
-        st.session_state.document_a = st.session_state.dialog_editor_a.value
+        st.session_state.document_a = st.session_state.dialog_editor_a
 
     def document_b_changed() -> None:
-        st.session_state.document_b = st.session_state.dialog_editor_b.value
+        st.session_state.document_b = st.session_state.dialog_editor_b
 
     left, right = st.columns(2)
     with left:
@@ -34,11 +46,15 @@ def show_editors() -> None:
             on_change=document_b_changed,
         )
 
-    if st.button("Close"):
+    if st.button("Close", on_click=close_dialog):
         st.rerun()
 
 
-st.button("Open dialog", on_click=show_editors)
+st.button("Open dialog", on_click=open_dialog)
+
+if st.session_state.show_dialog:
+    show_editors()
+
 st.subheader("Current content")
 st.code(st.session_state.document_a, language="markdown")
 st.code(st.session_state.document_b, language="markdown")

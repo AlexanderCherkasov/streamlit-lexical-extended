@@ -18,7 +18,7 @@ def test_initial_markdown_renders_directly_without_iframe(page: Page, server: st
     expect(editor(page)).to_contain_text("Product Notes")
     expect(editor(page).locator("table")).to_have_count(1)
     expect(editor(page).locator("code")).to_contain_text('print("round trip")')
-    assert page.locator(".streamlit-lexical-react-root").count() >= 2
+    expect(page.locator(".streamlit-lexical-react-root")).to_have_count(4)
 
 
 @pytest.mark.e2e
