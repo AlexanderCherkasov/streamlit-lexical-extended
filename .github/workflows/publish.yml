@@ -4,6 +4,10 @@ on:
   release:
     types:
       - published
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -29,7 +33,11 @@ jobs:
       - name: Verify release tag
         run: |
           VERSION=$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
-          test "$GITHUB_REF_NAME" = "v$VERSION"
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            test "$GITHUB_REF_NAME" = "v$VERSION"
+          else
+            echo "Publishing version $VERSION from ref $GITHUB_REF_NAME"
+          fi
       - name: Build frontend
         working-directory: streamlit_lexical_extended/frontend
         run: |
