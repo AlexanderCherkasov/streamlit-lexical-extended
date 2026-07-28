@@ -52,7 +52,7 @@ st.code(st.session_state["editor"].value, language="markdown")
 ```
 
 The function accepts `value`, `placeholder`, `height`, `min_height`,
-`debounce`, `key`, `on_change`, and `width`.
+`debounce`, `key`, `on_change`, `width`, and `toolbar`.
 
 - `value=None` leaves the current editor content untouched; `value=""` clears
   it. Any other string replaces the current document.
@@ -61,30 +61,74 @@ The function accepts `value`, `placeholder`, `height`, `min_height`,
 - `width` accepts `"stretch"`, `"content"`, or a positive pixel integer.
 - `on_change` receives no arguments.
 
+### Toolbar configuration
+
+By default, `toolbar=None` displays every tool. Pass a list to display only
+the controls needed by a particular editor:
+
+```python
+result = streamlit_lexical_extended(
+    value="# Compact editor",
+    key="compact_editor",
+    toolbar=["undo", "redo", "block_type", "bold", "italic"],
+)
+```
+
+An empty list hides the toolbar:
+
+```python
+result = streamlit_lexical_extended(
+    value="Keyboard-first editor",
+    toolbar=[],
+)
+```
+
+Available tool names:
+
+| Tool | Control |
+| --- | --- |
+| `undo`, `redo` | History |
+| `block_type` | Paragraph and heading selector |
+| `bold`, `italic`, `underline`, `strikethrough` | Inline formatting |
+| `quote` | Block quote |
+| `bullet_list`, `numbered_list` | Lists |
+| `table` | Table insertion |
+
+Selected controls retain the editor's standard toolbar order.
+
+### Right-to-left applications
+
+The editor automatically reads the computed `direction` of its Components v2
+Shadow host. No component argument is required. Parent application styles such
+as the following switch the editor, toolbar, lists, quotes, tables, and table
+menus to RTL:
+
+```python
+st.markdown(
+    """
+<style>
+body, html {
+    direction: RTL;
+    unicode-bidi: bidi-override;
+    text-align: right;
+}
+p, div, input, label, h1, h2, h3, h4, h5, h6 {
+    direction: RTL;
+    unicode-bidi: bidi-override;
+    text-align: right;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+```
+
 Use a unique `key` for each editor:
 
 ```python
 st.session_state["editor"].value  # Markdown string
 ```
 
-### Migrating from 0.2
-
-Version 0.3 has one intentionally breaking API:
-
-- `streamlit_lexical_extended()` now returns `ComponentResult`; read Markdown
-  from `result.value`.
-- `st.session_state[key]` contains that result object, so callbacks read
-  `st.session_state[key].value`.
-- The compatibility wrapper, `_v2` alias, and `overwrite` option were removed.
-
-Run the complete example:
-
-```bash
-streamlit run streamlit_lexical_extended/example.py
-```
-
-The example sends full-formatting Markdown into Lexical and displays the
-serialized `result.value` output for an end-to-end round-trip check.
 
 ## Development
 

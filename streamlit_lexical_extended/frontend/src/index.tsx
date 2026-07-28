@@ -21,6 +21,15 @@ interface ReactRootEntry {
 
 const reactRoots = new WeakMap<ParentElement, ReactRootEntry>()
 
+function getParentDirection(parentElement: ParentElement): "ltr" | "rtl" {
+  const styleTarget =
+    "host" in parentElement ? parentElement.host : parentElement
+  const ownerWindow = styleTarget.ownerDocument.defaultView
+  return ownerWindow?.getComputedStyle(styleTarget).direction === "rtl"
+    ? "rtl"
+    : "ltr"
+}
+
 const StreamlitLexicalRenderer: FrontendRenderer<
   StreamlitLexicalState,
   StreamlitLexicalData
@@ -59,6 +68,7 @@ const StreamlitLexicalRenderer: FrontendRenderer<
     <StrictMode>
       <StreamlitLexical
         {...data}
+        direction={getParentDirection(parentElement)}
         instanceKey={key}
         setStateValue={setStateValue}
       />

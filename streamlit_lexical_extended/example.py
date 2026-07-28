@@ -3,6 +3,19 @@ import streamlit as st
 from streamlit_lexical_extended import streamlit_lexical_extended
 from streamlit_lexical_extended.demo_content import FULL_FORMATTING_MARKDOWN
 
+TOOLBAR_TOOLS = [
+    "undo",
+    "redo",
+    "block_type",
+    "bold",
+    "italic",
+    "underline",
+    "strikethrough",
+    "quote",
+    "bullet_list",
+    "numbered_list",
+    "table",
+]
 
 st.set_page_config(page_title="Streamlit Lexical", page_icon="📝")
 st.title("Lexical Rich Text Editor")
@@ -11,6 +24,14 @@ st.caption(
 )
 
 st.session_state.setdefault("source_markdown", FULL_FORMATTING_MARKDOWN)
+
+with st.sidebar:
+    st.subheader("Toolbar configuration")
+    toolbar = st.multiselect(
+        "Visible tools",
+        options=TOOLBAR_TOOLS,
+        default=TOOLBAR_TOOLS,
+    )
 
 
 def sync_source() -> None:
@@ -43,6 +64,7 @@ result = streamlit_lexical_extended(
     height=520,
     debounce=300,
     on_change=sync_source,
+    toolbar=toolbar,
 )
 st.session_state.output_markdown = result.value
 st.text_area(

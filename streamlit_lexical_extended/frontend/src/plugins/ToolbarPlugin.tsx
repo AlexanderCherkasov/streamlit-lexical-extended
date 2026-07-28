@@ -13,7 +13,7 @@ import {
   KEY_DOWN_COMMAND,
   COMMAND_PRIORITY_LOW
 } from 'lexical';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { $createHeadingNode, $createQuoteNode } from '@lexical/rich-text';
 import { $setBlocksType } from '@lexical/selection';
@@ -22,13 +22,30 @@ import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND, $isListNode
 
 const LowPriority = 1;
 
+export const DEFAULT_TOOLBAR_TOOLS = [
+  'undo',
+  'redo',
+  'block_type',
+  'bold',
+  'italic',
+  'underline',
+  'strikethrough',
+  'quote',
+  'bullet_list',
+  'numbered_list',
+  'table',
+] as const;
+
+export type ToolbarTool = (typeof DEFAULT_TOOLBAR_TOOLS)[number];
+
 function Divider() {
   return <div className="divider" />;
 }
 
-export default function ToolbarPlugin() {
+export default function ToolbarPlugin({ tools }: { tools: readonly ToolbarTool[] }) {
   const [editor] = useLexicalComposerContext();
   const toolbarRef = useRef(null);
+  const enabled = useMemo(() => new Set(tools), [tools]);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [isBold, setIsBold] = useState(false);
@@ -148,156 +165,204 @@ export default function ToolbarPlugin() {
     );
   }, [editor, $updateToolbar]);
 
+  const showHistory = enabled.has('undo') || enabled.has('redo');
+  const showBlockType = enabled.has('block_type');
+  const showInlineFormatting =
+    enabled.has('bold') ||
+    enabled.has('italic') ||
+    enabled.has('underline') ||
+    enabled.has('strikethrough');
+  const showBlocks =
+    enabled.has('quote') ||
+    enabled.has('bullet_list') ||
+    enabled.has('numbered_list');
+  const showTable = enabled.has('table');
+
   return (
     <div className="toolbar" ref={toolbarRef}>
-      <button
-        disabled={!canUndo}
-        onClick={() => {
-          editor.dispatchCommand(UNDO_COMMAND, undefined);
-        }}
-        className="toolbar-item spaced"
-        aria-label="Undo">
-        <i className="format undo" />
-      </button>
-      <button
-        disabled={!canRedo}
-        onClick={() => {
-          editor.dispatchCommand(REDO_COMMAND, undefined);
-        }}
-        className="toolbar-item"
-        aria-label="Redo">
-        <i className="format redo" />
-      </button>
-      <Divider />
-      <select
-        className="toolbar-item block-controls"
-        value={currentHeading}
-        onChange={onHeadingChange}
-      >
-        <option value="paragraph">Normal</option>
-        <option value="h1">Heading 1</option>
-        <option value="h2">Heading 2</option>
-        <option value="h3">Heading 3</option>
-        <option value="h4">Heading 4</option>
-        <option value="h5">Heading 5</option>
-        <option value="h6">Heading 6</option>
-      </select>
-      <Divider />
-      <button
-        onClick={() => {
-          editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
-        }}
-        className={'toolbar-item spaced ' + (isBold ? 'active' : '')}
-        aria-label="Format Bold">
-        <i className="format bold" />
-      </button>
-      <button
-        onClick={() => {
-          editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
-        }}
-        className={'toolbar-item spaced ' + (isItalic ? 'active' : '')}
-        aria-label="Format Italics">
-        <i className="format italic" />
-      </button>
-      <button
-        onClick={() => {
-          editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline');
-        }}
-        className={'toolbar-item spaced ' + (isUnderline ? 'active' : '')}
-        aria-label="Format Underline">
-        <i className="format underline" />
-      </button>
-      <button
-        onClick={() => {
-          editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
-        }}
-        className={'toolbar-item spaced ' + (isStrikethrough ? 'active' : '')}
-        aria-label="Format Strikethrough (Ctrl+Shift+X)">
-        <i className="format strikethrough" />
-      </button>
-      <Divider />
-      <button
-        onClick={() => {
-          editor.update(() => {
-            const selection = $getSelection();
-            if ($isRangeSelection(selection)) {
-              $setBlocksType(selection, () => $createQuoteNode());
-            }
-          });
-        }}
-        className={'toolbar-item spaced ' + (isQuote ? 'active' : '')}
-        aria-label="Quote">
-        <i className="format quote" />
-      </button>
-      <button
-        onClick={() => {
-          editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
-        }}
-        className={'toolbar-item spaced ' + (isBulletList ? 'active' : '')}
-        aria-label="Bullet List">
-        <i className="format list-ul" />
-      </button>
-      <button
-        onClick={() => {
-          editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
-        }}
-        className={'toolbar-item spaced ' + (isNumberList ? 'active' : '')}
-        aria-label="Numbered List">
-        <i className="format list-ol" />
-      </button>
-      <Divider />
-      <div className="table-button-container">
-        <button
-          className={'toolbar-item spaced ' + (tablePickerOpen ? 'active' : '')}
-          onClick={() => setTablePickerOpen((v) => !v)}
-          aria-label="Insert Table"
+      {showHistory && (
+        <>
+          {enabled.has('undo') && (
+            <button
+              disabled={!canUndo}
+              onClick={() => {
+                editor.dispatchCommand(UNDO_COMMAND, undefined);
+              }}
+              className="toolbar-item spaced"
+              aria-label="Undo">
+              <i className="format undo" />
+            </button>
+          )}
+          {enabled.has('redo') && (
+            <button
+              disabled={!canRedo}
+              onClick={() => {
+                editor.dispatchCommand(REDO_COMMAND, undefined);
+              }}
+              className="toolbar-item"
+              aria-label="Redo">
+              <i className="format redo" />
+            </button>
+          )}
+        </>
+      )}
+      {showHistory && (showBlockType || showInlineFormatting || showBlocks || showTable) && <Divider />}
+      {showBlockType && (
+        <select
+          aria-label="Block type"
+          className="toolbar-item block-controls"
+          value={currentHeading}
+          onChange={onHeadingChange}
         >
-          <i className="format table" />
-        </button>
-        {tablePickerOpen && (
-          <div
-            className="table-insert-popover"
-            onMouseLeave={() => {
-              setHoverRows(0);
-              setHoverCols(0);
-            }}
+          <option value="paragraph">Normal</option>
+          <option value="h1">Heading 1</option>
+          <option value="h2">Heading 2</option>
+          <option value="h3">Heading 3</option>
+          <option value="h4">Heading 4</option>
+          <option value="h5">Heading 5</option>
+          <option value="h6">Heading 6</option>
+        </select>
+      )}
+      {showBlockType && (showInlineFormatting || showBlocks || showTable) && <Divider />}
+      {showInlineFormatting && (
+        <>
+          {enabled.has('bold') && (
+            <button
+              onClick={() => {
+                editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
+              }}
+              className={'toolbar-item spaced ' + (isBold ? 'active' : '')}
+              aria-label="Format Bold">
+              <i className="format bold" />
+            </button>
+          )}
+          {enabled.has('italic') && (
+            <button
+              onClick={() => {
+                editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
+              }}
+              className={'toolbar-item spaced ' + (isItalic ? 'active' : '')}
+              aria-label="Format Italics">
+              <i className="format italic" />
+            </button>
+          )}
+          {enabled.has('underline') && (
+            <button
+              onClick={() => {
+                editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline');
+              }}
+              className={'toolbar-item spaced ' + (isUnderline ? 'active' : '')}
+              aria-label="Format Underline">
+              <i className="format underline" />
+            </button>
+          )}
+          {enabled.has('strikethrough') && (
+            <button
+              onClick={() => {
+                editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
+              }}
+              className={'toolbar-item spaced ' + (isStrikethrough ? 'active' : '')}
+              aria-label="Format Strikethrough (Ctrl+Shift+X)">
+              <i className="format strikethrough" />
+            </button>
+          )}
+        </>
+      )}
+      {showInlineFormatting && (showBlocks || showTable) && <Divider />}
+      {showBlocks && (
+        <>
+          {enabled.has('quote') && (
+            <button
+              onClick={() => {
+                editor.update(() => {
+                  const selection = $getSelection();
+                  if ($isRangeSelection(selection)) {
+                    $setBlocksType(selection, () => $createQuoteNode());
+                  }
+                });
+              }}
+              className={'toolbar-item spaced ' + (isQuote ? 'active' : '')}
+              aria-label="Quote">
+              <i className="format quote" />
+            </button>
+          )}
+          {enabled.has('bullet_list') && (
+            <button
+              onClick={() => {
+                editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
+              }}
+              className={'toolbar-item spaced ' + (isBulletList ? 'active' : '')}
+              aria-label="Bullet List">
+              <i className="format list-ul" />
+            </button>
+          )}
+          {enabled.has('numbered_list') && (
+            <button
+              onClick={() => {
+                editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
+              }}
+              className={'toolbar-item spaced ' + (isNumberList ? 'active' : '')}
+              aria-label="Numbered List">
+              <i className="format list-ol" />
+            </button>
+          )}
+        </>
+      )}
+      {showBlocks && showTable && <Divider />}
+      {showTable && (
+        <div className="table-button-container">
+          <button
+            className={'toolbar-item spaced ' + (tablePickerOpen ? 'active' : '')}
+            onClick={() => setTablePickerOpen((v) => !v)}
+            aria-label="Insert Table"
           >
-            <div className="table-insert-grid">
-              {Array.from({ length: 10 }).map((_, r) => (
-                <div key={r} className="table-insert-row">
-                  {Array.from({ length: 10 }).map((__, c) => {
-                    const row = r + 1;
-                    const col = c + 1;
-                    const active = row <= hoverRows && col <= hoverCols;
-                    return (
-                      <div
-                        key={c}
-                        className={'table-insert-cell' + (active ? ' active' : '')}
-                        onMouseEnter={() => {
-                          setHoverRows(row);
-                          setHoverCols(col);
-                        }}
-                        onClick={() => {
-                          editor.dispatchCommand(INSERT_TABLE_COMMAND, {
-                            columns: String(col),
-                            rows: String(row),
-                            includeHeaders: { rows: true, columns: false },
-                          });
-                          setTablePickerOpen(false);
-                        }}
-                        title={`${row} x ${col}`}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
+            <i className="format table" />
+          </button>
+          {tablePickerOpen && (
+            <div
+              className="table-insert-popover"
+              onMouseLeave={() => {
+                setHoverRows(0);
+                setHoverCols(0);
+              }}
+            >
+              <div className="table-insert-grid">
+                {Array.from({ length: 10 }).map((_, r) => (
+                  <div key={r} className="table-insert-row">
+                    {Array.from({ length: 10 }).map((__, c) => {
+                      const row = r + 1;
+                      const col = c + 1;
+                      const active = row <= hoverRows && col <= hoverCols;
+                      return (
+                        <div
+                          key={c}
+                          className={'table-insert-cell' + (active ? ' active' : '')}
+                          onMouseEnter={() => {
+                            setHoverRows(row);
+                            setHoverCols(col);
+                          }}
+                          onClick={() => {
+                            editor.dispatchCommand(INSERT_TABLE_COMMAND, {
+                              columns: String(col),
+                              rows: String(row),
+                              includeHeaders: { rows: true, columns: false },
+                            });
+                            setTablePickerOpen(false);
+                          }}
+                          title={`${row} x ${col}`}
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+              <div className="table-insert-footer">
+                {hoverRows > 0 && hoverCols > 0 ? `${hoverRows} x ${hoverCols}` : 'Select size'}
+              </div>
             </div>
-            <div className="table-insert-footer">
-              {hoverRows > 0 && hoverCols > 0 ? `${hoverRows} x ${hoverCols}` : 'Select size'}
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

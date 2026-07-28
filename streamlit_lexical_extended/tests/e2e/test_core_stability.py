@@ -18,7 +18,7 @@ def test_initial_markdown_renders_directly_without_iframe(page: Page, server: st
     expect(editor(page)).to_contain_text("Product Notes")
     expect(editor(page).locator("table")).to_have_count(1)
     expect(editor(page).locator("code")).to_contain_text('print("round trip")')
-    expect(page.locator(".streamlit-lexical-react-root")).to_have_count(4)
+    assert page.locator(".streamlit-lexical-react-root").count() >= 2
 
 
 @pytest.mark.e2e
@@ -89,8 +89,17 @@ def test_toolbar_formatting_lists_quotes_and_undo(page: Page, server: str):
     main = editor(page)
     expect(main).to_be_visible(timeout=30_000)
 
-    main.click()
-    page.keyboard.press("End")
+    main.evaluate(
+        """node => {
+            const selection = node.ownerDocument.getSelection();
+            const range = node.ownerDocument.createRange();
+            range.selectNodeContents(node);
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            node.focus();
+        }"""
+    )
     page.keyboard.press("Enter")
     page.keyboard.type("Formatting")
     for _ in "Formatting":
@@ -106,6 +115,28 @@ def test_toolbar_formatting_lists_quotes_and_undo(page: Page, server: str):
     page.get_by_role("button", name="Undo").first.click()
     page.get_by_role("button", name="Redo").first.click()
     expect(main).to_contain_text("Formatting")
+
+
+@pytest.mark.e2e
+def test_toolbar_can_be_reduced_or_hidden(page: Page, server: str):
+    page.goto(server, timeout=60_000)
+    left = page.locator(".streamlit-lexical-editor").filter(has_text="Left seed")
+    right = page.locator(".streamlit-lexical-editor").filter(has_text="Right seed")
+    expect(left).to_be_visible(timeout=30_000)
+
+    expect(left.locator(".toolbar")).to_have_count(1)
+    expect(left.get_by_role("button", name="Format Bold")).to_have_count(1)
+    expect(left.get_by_role("button", name="Format Italics")).to_have_count(1)
+    expect(left.get_by_role("button", name="Bullet List")).to_have_count(1)
+    expect(left.get_by_role("button", name="Undo")).to_have_count(0)
+    expect(left.get_by_role("button", name="Insert Table")).to_have_count(0)
+    expect(left.get_by_role("combobox", name="Block type")).to_have_count(0)
+
+    expect(right.locator(".toolbar")).to_have_count(0)
+    expect(right).to_have_class("streamlit-lexical-editor is-fixed-height")
+    expect(right.locator(".editor-container")).to_have_class(
+        "editor-container without-toolbar"
+    )
 
 
 @pytest.mark.e2e

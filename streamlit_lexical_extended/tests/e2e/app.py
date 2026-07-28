@@ -70,6 +70,7 @@ with left:
         key="left_editor",
         height=180,
         debounce=200,
+        toolbar=["bold", "italic", "bullet_list"],
     )
 with right:
     streamlit_lexical_extended(
@@ -77,4 +78,5 @@ with right:
         key="right_editor",
         height=180,
         debounce=200,
+        toolbar=[],
     )
