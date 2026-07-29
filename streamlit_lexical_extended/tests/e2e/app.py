@@ -29,7 +29,9 @@ if "callback_count" not in st.session_state:
 
 
 def editor_changed() -> None:
-    st.session_state.document = st.session_state.main_editor
+    raw = st.session_state.get("main_editor")
+    val = st.session_state.get("_lexical_internal_val_main_editor") or getattr(raw, "value", raw) or ""
+    st.session_state.document = val if isinstance(val, str) else str(val)
     st.session_state.callback_count += 1
 
 

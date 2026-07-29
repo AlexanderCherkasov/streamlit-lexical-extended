@@ -178,6 +178,14 @@ def streamlit_lexical_extended(
     controls, and an empty sequence hides the toolbar.
     """
 
+    if value is not None and not isinstance(value, str):
+        if hasattr(value, "value"):
+            value = getattr(value, "value", "")
+        elif isinstance(value, dict):
+            value = value.get("value", "")
+        if isinstance(value, dict):
+            value = value.get("value", "")
+
     _validate_arguments(
         value=value,
         placeholder=placeholder,

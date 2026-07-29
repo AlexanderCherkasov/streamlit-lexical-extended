@@ -44,7 +44,7 @@ def _assert_api_round_trip(
     page.goto(example_server, timeout=60_000)
     source = page.get_by_role("textbox", name="Input Markdown", exact=True)
     output = page.get_by_role("textbox", name="Output Markdown", exact=True)
-    editor = page.locator('[contenteditable="true"]')
+    editor = page.locator('[contenteditable="true"]').first
 
     expect(editor).to_be_visible(timeout=30_000)
     expect(source).to_have_value(FULL_FORMATTING_MARKDOWN)

@@ -25,10 +25,12 @@ def close_dialog() -> None:
 @st.dialog("Two editors", width="large")
 def show_editors() -> None:
     def document_a_changed() -> None:
-        st.session_state.document_a = st.session_state.dialog_editor_a
+        val = st.session_state.get("_lexical_internal_val_dialog_editor_a") or getattr(st.session_state.get("dialog_editor_a"), "value", "")
+        st.session_state.document_a = val if isinstance(val, str) else str(val)
 
     def document_b_changed() -> None:
-        st.session_state.document_b = st.session_state.dialog_editor_b
+        val = st.session_state.get("_lexical_internal_val_dialog_editor_b") or getattr(st.session_state.get("dialog_editor_b"), "value", "")
+        st.session_state.document_b = val if isinstance(val, str) else str(val)
 
     left, right = st.columns(2)
     with left:
