@@ -58,7 +58,7 @@ with tab1:
             st.session_state.source_markdown = value
 
     source_markdown = st.text_area(
-        "Input Markdown Source",
+        "Input Markdown",
         key="source_markdown",
         height=200,
     )
@@ -72,7 +72,7 @@ with tab1:
         toolbar=toolbar,
     )
     st.text_area(
-        "Output Returned String",
+        "Output Markdown",
         value=result_text,
         height=150,
         disabled=True,
