@@ -24434,6 +24434,16 @@ function _y({ text: e }) {
 }
 //#endregion
 //#region src/index.tsx
+if (typeof window < "u" && typeof Node < "u") {
+	let e = Node.prototype.removeChild;
+	Node.prototype.removeChild = function(t) {
+		return t.parentNode === this ? e.call(this, t) : t.parentNode ? e.call(t.parentNode, t) : t;
+	};
+	let t = Node.prototype.insertBefore;
+	Node.prototype.insertBefore = function(e, n) {
+		return n && n.parentNode !== this ? t.call(this, e, null) : t.call(this, e, n);
+	};
+}
 var vy = /* @__PURE__ */ new WeakMap();
 function yy(e) {
 	let t = "host" in e ? e.host : e;
@@ -24443,7 +24453,13 @@ var by = ({ data: e, key: t, parentElement: n, setStateValue: r }) => {
 	let i = n.querySelector(".streamlit-lexical-react-root");
 	if (!i) throw Error("Streamlit Lexical React root element was not found.");
 	let a = vy.get(n);
-	a && a.element !== i && (a.root.unmount(), vy.delete(n), a = void 0), a || (a = {
+	if (a && a.element !== i) {
+		try {
+			a.root.unmount();
+		} catch {}
+		vy.delete(n), a = void 0;
+	}
+	a || (a = {
 		element: i,
 		generation: 0,
 		root: (0, g.createRoot)(i)
@@ -24456,7 +24472,12 @@ var by = ({ data: e, key: t, parentElement: n, setStateValue: r }) => {
 		setStateValue: r
 	}) })), () => {
 		let e = vy.get(n);
-		e !== a || e.generation !== o || (e.root.unmount(), vy.delete(n));
+		if (!(e !== a || e.generation !== o)) {
+			try {
+				e.root.unmount();
+			} catch {}
+			vy.delete(n);
+		}
 	};
 };
 //#endregion

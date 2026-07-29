@@ -190,9 +190,22 @@ def streamlit_lexical_extended(
         toolbar=toolbar,
     )
 
+    prev_internal_val = (
+        st.session_state.get(f"_lexical_internal_val_{key}")
+        if key is not None
+        else None
+    )
+    is_external_update = (
+        value is not None
+        and key is not None
+        and prev_internal_val is not None
+        and value != prev_internal_val
+    )
+
     internal_value = value
     if key is not None:
-        st.session_state[f"_lexical_internal_val_{key}"] = value
+        if is_external_update or prev_internal_val is None:
+            st.session_state[f"_lexical_internal_val_{key}"] = value
 
     def _handle_on_change() -> None:
         if key is not None and key in st.session_state:
@@ -207,7 +220,6 @@ def streamlit_lexical_extended(
                 val = val.get("value", "")
             if isinstance(val, str):
                 st.session_state[f"_lexical_internal_val_{key}"] = val
-                st.session_state[key] = val
         if on_change is not None:
             on_change()
 
@@ -231,6 +243,9 @@ def streamlit_lexical_extended(
         mount_arguments["isolate_styles"] = True
 
     raw_result = _component(**mount_arguments)
+
+    if is_external_update:
+        return value
 
     if hasattr(raw_result, "value"):
         result_str = raw_result.value

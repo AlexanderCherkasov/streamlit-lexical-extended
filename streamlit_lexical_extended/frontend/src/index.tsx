@@ -11,6 +11,31 @@ import StreamlitLexical, {
 } from "./StreamlitLexical"
 import "./styles.css"
 
+// Safe DOM guards for React DOM reconciler unmounting with direct-manipulation editors (Lexical).
+if (typeof window !== "undefined" && typeof Node !== "undefined") {
+  const originalRemoveChild = Node.prototype.removeChild
+  Node.prototype.removeChild = function <T extends Node>(child: T): T {
+    if (child.parentNode !== this) {
+      if (child.parentNode) {
+        return originalRemoveChild.call(child.parentNode, child) as T
+      }
+      return child
+    }
+    return originalRemoveChild.call(this, child) as T
+  }
+
+  const originalInsertBefore = Node.prototype.insertBefore
+  Node.prototype.insertBefore = function <T extends Node>(
+    node: T,
+    child: Node | null,
+  ): T {
+    if (child && child.parentNode !== this) {
+      return originalInsertBefore.call(this, node, null) as T
+    }
+    return originalInsertBefore.call(this, node, child) as T
+  }
+}
+
 type ParentElement = FrontendRendererArgs["parentElement"]
 
 interface ReactRootEntry {
@@ -47,7 +72,11 @@ const StreamlitLexicalRenderer: FrontendRenderer<
   // Streamlit can preserve the ShadowRoot while replacing the registered HTML
   // placeholder. Never reuse a React root whose DOM container is now stale.
   if (entry && entry.element !== rootElement) {
-    entry.root.unmount()
+    try {
+      entry.root.unmount()
+    } catch {
+      // Ignore DOM unmount errors from detached Lexical nodes
+    }
     reactRoots.delete(parentElement)
     entry = undefined
   }
@@ -82,7 +111,11 @@ const StreamlitLexicalRenderer: FrontendRenderer<
     if (mountedEntry !== entry || mountedEntry.generation !== generation) {
       return
     }
-    mountedEntry.root.unmount()
+    try {
+      mountedEntry.root.unmount()
+    } catch {
+      // Ignore DOM unmount errors from detached Lexical nodes
+    }
     reactRoots.delete(parentElement)
   }
 }
