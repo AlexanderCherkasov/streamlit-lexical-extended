@@ -2,7 +2,7 @@
 
 All notable changes to streamlit-lexical-extended will be documented in this file.
 
-## [0.3.10] - 2026-07-29
+## [0.3.11] - 2026-07-29
 
 ### Fixed
 
