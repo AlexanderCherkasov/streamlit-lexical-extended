@@ -2,6 +2,14 @@
 
 All notable changes to streamlit-lexical-extended will be documented in this file.
 
+## [0.3.10] - 2026-07-29
+
+### Fixed
+
+- **Illegal Session State Mutation**: Resolved `StreamlitAPIException` caused by mutating `st.session_state[key]` on instantiated widget keys during callback execution.
+- **Shared State Sync & External Updates**: Enhanced external programmatic value detection to keep multiple sequential editors in sync without triggering echo rerun loops.
+- **React DOM Unmount Crash**: Added safe `removeChild` DOM guards and error handling in `index.tsx` to prevent `NotFoundError: Failed to execute 'removeChild' on 'Node'` when unmounting editors inside `@st.dialog` or tabs.
+
 ## [0.3.8] - 2026-07-28
 
 ### Changed
