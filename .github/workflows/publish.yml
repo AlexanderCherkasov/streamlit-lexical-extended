@@ -37,7 +37,12 @@ jobs:
         run: |
           VERSION=$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
           if [ "$GITHUB_REF_TYPE" = "tag" ]; then
-            test "$GITHUB_REF_NAME" = "v$VERSION"
+            TAG_VERSION="${GITHUB_REF_NAME#v}"
+            if [ "$TAG_VERSION" != "$VERSION" ]; then
+              echo "Error: Tag version ($TAG_VERSION) does not match pyproject.toml version ($VERSION)"
+              exit 1
+            fi
+            echo "Verified tag $GITHUB_REF_NAME matches pyproject.toml version $VERSION"
           else
             echo "Publishing version $VERSION from ref $GITHUB_REF_NAME"
           fi
